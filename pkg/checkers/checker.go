@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/Azure/kdebug/pkg/base"
+	"github.com/Azure/kdebug/pkg/env"
 )
 
 type Checker interface {
@@ -13,7 +14,9 @@ type Checker interface {
 }
 
 func Check(suites []string) ([]*base.CheckResult, error) {
-	ctx := &base.CheckContext{}
+	ctx := &base.CheckContext{
+		Environment: env.GetEnvironment(),
+	}
 
 	checkers := make([]Checker, 0, len(suites))
 	for _, suite := range suites {

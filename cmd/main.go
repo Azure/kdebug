@@ -12,6 +12,7 @@ import (
 
 type Options struct {
 	Suites []string `short:"s" long:"suite" description:"Check suites"`
+	Format string   `short:"f" long:"format" description:"Output format"`
 }
 
 func main() {
@@ -29,8 +30,14 @@ func main() {
 	}
 
 	// Output
-	var formatter formatters.JsonFormatter
-	err = formatter.Format(os.Stdout, results)
+	var formatter formatters.Formatter
+	if opts.Format == "json" {
+		formatter = &formatters.JsonFormatter{}
+	} else {
+		formatter = &formatters.TextFormatter{}
+	}
+
+	err = formatter.WriteResults(os.Stdout, results)
 	if err != nil {
 		log.Fatal(err)
 	}

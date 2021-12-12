@@ -9,7 +9,7 @@ type CheckResult struct {
 	Checker         string
 	Error           string
 	Description     string
-	Recommandations []string
+	Recommendations []string
 	Logs            []string
 	HelpLinks       []string
 }

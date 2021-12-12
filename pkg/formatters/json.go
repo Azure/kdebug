@@ -9,7 +9,7 @@ import (
 
 type JsonFormatter struct{}
 
-func (f *JsonFormatter) Format(w io.Writer, results []*base.CheckResult) error {
+func (f *JsonFormatter) WriteResults(w io.Writer, results []*base.CheckResult) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "    ")
 	return enc.Encode(results)

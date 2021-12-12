@@ -17,7 +17,7 @@ var failResult = base.CheckResult{
 	Checker:     "Dummy",
 	Error:       "Dummy failure",
 	Description: "This is a dummy failure",
-	Recommandations: []string{
+	Recommendations: []string{
 		"Remove environment variable `KDEBUG_DUMMY_FAIL`.",
 	},
 }

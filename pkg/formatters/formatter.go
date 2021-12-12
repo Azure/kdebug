@@ -7,5 +7,5 @@ import (
 )
 
 type Formatter interface {
-	Format(io.Writer, []*base.CheckResult) error
+	WriteResults(io.Writer, []*base.CheckResult) error
 }

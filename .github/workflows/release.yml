@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  release:
+    types: [ created ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Build
+      run: make build
+
+    - name: Test
+      run: make test
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: bin/kdebug
+        generate_release_notes: true
+

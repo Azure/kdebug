@@ -5,7 +5,7 @@ import "github.com/Azure/kdebug/pkg/env"
 type CheckContext struct {
 	// TODO: Add user input here
 	// TODO: Add shared dependencies here, for example, kube-client
-	Environment *env.Environment
+	Environment env.Environment
 }
 
 type CheckResult struct {

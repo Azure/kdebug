@@ -1,11 +1,15 @@
 package env
 
-type Environment struct {
-	flags []string
+type Environment interface {
+	HasFlag(flag string) bool
 }
 
-func (e *Environment) HasFlag(flag string) bool {
-	for _, f := range e.flags {
+type StaticEnvironment struct {
+	Flags []string
+}
+
+func (e *StaticEnvironment) HasFlag(flag string) bool {
+	for _, f := range e.Flags {
 		if flag == f {
 			return true
 		}
@@ -13,9 +17,9 @@ func (e *Environment) HasFlag(flag string) bool {
 	return false
 }
 
-func GetEnvironment() *Environment {
-	return &Environment{
-		flags: getFlags(),
+func GetEnvironment() Environment {
+	return &StaticEnvironment{
+		Flags: getFlags(),
 	}
 }
 

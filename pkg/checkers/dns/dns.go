@@ -23,6 +23,9 @@ var (
 			"www.bing.com",
 		},
 		Recommendations: []string{PublicDnsRecommendation},
+		HelpLinks: []string{
+			"https://developers.google.com/speed/public-dns",
+		},
 	}
 	AzureDnsServer = DnsServer{
 		Name:   "Azure DNS",
@@ -35,6 +38,10 @@ var (
 			PublicDnsRecommendation,
 			"VM might be on a bad host. Try to `redeploy` it.",
 		},
+		HelpLinks: []string{
+			"https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16",
+			"https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-name-resolution-for-vms-and-role-instances#azure-provided-name-resolution",
+		},
 	}
 	AksCoreDnsServerPublic = DnsServer{
 		Name:   "AKS Core DNS",
@@ -46,6 +53,11 @@ var (
 		Recommendations: []string{
 			PublicDnsRecommendation,
 		},
+		HelpLinks: []string{
+			"https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/",
+			"https://kubernetes.io/docs/tasks/administer-cluster/coredns/",
+			"https://coredns.io/plugins/kubernetes/",
+		},
 	}
 	AksCoreDnsServerInCluster = DnsServer{
 		Name:   "AKS Core DNS",
@@ -55,6 +67,11 @@ var (
 		},
 		Recommendations: []string{
 			CoreDnsRecommendation,
+		},
+		HelpLinks: []string{
+			"https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/",
+			"https://kubernetes.io/docs/tasks/administer-cluster/coredns/",
+			"https://coredns.io/plugins/kubernetes/",
 		},
 	}
 	SystemdResolvedDnsServer = DnsServer{
@@ -67,6 +84,9 @@ var (
 		Recommendations: []string{
 			"systemd-resolved service might not be running. Check by running `sudo systemctl status systemd-resolved`.",
 		},
+		HelpLinks: []string{
+			"https://www.freedesktop.org/software/systemd/man/systemd-resolved.service.html",
+		},
 	}
 )
 
@@ -75,10 +95,15 @@ type DnsServer struct {
 	Server          string
 	Queries         []string
 	Recommendations []string
+	HelpLinks       []string
+}
+
+type DnsClient interface {
+	Exchange(m *dns.Msg, a string) (r *dns.Msg, rtt time.Duration, err error)
 }
 
 type DnsChecker struct {
-	client *dns.Client
+	client DnsClient
 }
 
 func New() *DnsChecker {
@@ -108,7 +133,7 @@ func (c *DnsChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) 
 	return result, nil
 }
 
-func getCheckTargets(e *env.Environment) []DnsServer {
+func getCheckTargets(e env.Environment) []DnsServer {
 	targets := []DnsServer{
 		GoogleDnsServer,
 	}
@@ -139,6 +164,7 @@ func (c *DnsChecker) checkServer(server DnsServer, query string) (*base.CheckRes
 				query, server.Name, server.Server),
 			Description:     err.Error(),
 			Recommendations: server.Recommendations,
+			HelpLinks:       server.HelpLinks,
 		}, nil
 	}
 	if r.Rcode != dns.RcodeSuccess {
@@ -148,6 +174,7 @@ func (c *DnsChecker) checkServer(server DnsServer, query string) (*base.CheckRes
 				server.Name, server.Server),
 			Description:     fmt.Sprintf("Unexpected rcode: %d", r.Rcode),
 			Recommendations: server.Recommendations,
+			HelpLinks:       server.HelpLinks,
 		}, nil
 	}
 	return &base.CheckResult{

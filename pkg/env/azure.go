@@ -11,7 +11,7 @@ const (
 )
 
 func getAzureFlags() []string {
-	// IDMS should exist on Azure VMs
+	// IMDS should exist on Azure VMs
 	client := &http.Client{
 		Timeout: time.Second,
 	}

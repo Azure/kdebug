@@ -12,13 +12,17 @@ type TextFormatter struct{}
 func (f *TextFormatter) WriteResults(w io.Writer, results []*base.CheckResult) error {
 	failures := []*base.CheckResult{}
 	for _, r := range results {
-		if !r.Ok() {
+		if r.Ok() {
+			fmt.Fprintf(w, "[%s] %s\n", r.Checker, r.Description)
+		} else {
 			failures = append(failures, r)
 		}
 	}
 
+	fmt.Fprintf(w, "------------------------------\n")
+
 	if len(failures) == 0 {
-		fmt.Fprintf(w, "All checks passed!\n")
+		fmt.Fprintf(w, "All %d checks passed!\n", len(results))
 		return nil
 	}
 

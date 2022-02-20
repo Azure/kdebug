@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/Azure/kdebug/pkg/base"
-	"github.com/Azure/kdebug/pkg/env"
 )
 
 type Checker interface {
@@ -13,11 +12,7 @@ type Checker interface {
 	Check(*base.CheckContext) ([]*base.CheckResult, error)
 }
 
-func Check(suites []string) ([]*base.CheckResult, error) {
-	ctx := &base.CheckContext{
-		Environment: env.GetEnvironment(),
-	}
-
+func Check(ctx *base.CheckContext, suites []string) ([]*base.CheckResult, error) {
 	checkers := make([]Checker, 0, len(suites))
 	for _, suite := range suites {
 		if checker, ok := allCheckers[suite]; ok {

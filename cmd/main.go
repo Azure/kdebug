@@ -3,16 +3,60 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	flags "github.com/jessevdk/go-flags"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 
+	"github.com/Azure/kdebug/pkg/base"
 	chks "github.com/Azure/kdebug/pkg/checkers"
+	"github.com/Azure/kdebug/pkg/env"
 	"github.com/Azure/kdebug/pkg/formatters"
 )
 
 type Options struct {
-	Suites []string `short:"s" long:"suite" description:"Check suites"`
-	Format string   `short:"f" long:"format" description:"Output format"`
+	Suites         []string `short:"s" long:"suite" description:"Check suites"`
+	Format         string   `short:"f" long:"format" description:"Output format"`
+	KubeMasterUrl  string   `long:"kube-master-url" description:"Kubernetes API server URL"`
+	KubeConfigPath string   `long:"kube-config-path" description:"Path to kubeconfig file"`
+}
+
+func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {
+	// Try default path
+	if kubeConfigPath == "" {
+		if home := homedir.HomeDir(); home != "" {
+			kubeConfigPath = filepath.Join(home, ".kube", "config")
+		}
+	}
+	// Try env
+	if kubeConfigPath == "" {
+		if path := os.Getenv("KUBECONFIG"); path != "" {
+			kubeConfigPath = path
+		}
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags(masterUrl, kubeConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	return kubernetes.NewForConfig(config)
+}
+
+func buildContext(opts *Options) (*base.CheckContext, error) {
+	ctx := &base.CheckContext{
+		Environment: env.GetEnvironment(),
+	}
+
+	kubeClient, err := buildKubeClient(opts.KubeMasterUrl, opts.KubeConfigPath)
+	if err == nil {
+		ctx.KubeClient = kubeClient
+	} else {
+		log.Println("[WARN] kubeconfig is not found. Kubernetes related checkers will not work.")
+	}
+
+	return ctx, nil
 }
 
 func main() {
@@ -23,8 +67,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Prepare dependencies
+	ctx, err := buildContext(&opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Check
-	results, err := chks.Check(opts.Suites)
+	results, err := chks.Check(ctx, opts.Suites)
 	if err != nil {
 		log.Fatal(err)
 	}

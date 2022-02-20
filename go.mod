@@ -3,15 +3,17 @@ module github.com/Azure/kdebug
 go 1.17
 
 require (
+	github.com/dustin/go-humanize v1.0.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/miekg/dns v1.1.43
+	github.com/sirupsen/logrus v1.8.1
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
+	k8s.io/apimachinery v0.20.15
 	k8s.io/client-go v0.20.15
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-logr/logr v0.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
@@ -33,7 +35,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 	k8s.io/api v0.20.15 // indirect
-	k8s.io/apimachinery v0.20.15 // indirect
 	k8s.io/klog/v2 v2.4.0 // indirect
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect

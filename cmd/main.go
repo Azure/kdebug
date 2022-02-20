@@ -24,16 +24,17 @@ type Options struct {
 }
 
 func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {
-	// Try default path
-	if kubeConfigPath == "" {
-		if home := homedir.HomeDir(); home != "" {
-			kubeConfigPath = filepath.Join(home, ".kube", "config")
-		}
-	}
 	// Try env
 	if kubeConfigPath == "" {
 		if path := os.Getenv("KUBECONFIG"); path != "" {
 			kubeConfigPath = path
+		}
+	}
+
+	// Try default path
+	if kubeConfigPath == "" {
+		if home := homedir.HomeDir(); home != "" {
+			kubeConfigPath = filepath.Join(home, ".kube", "config")
 		}
 	}
 
@@ -53,7 +54,7 @@ func buildContext(opts *Options) (*base.CheckContext, error) {
 	if err == nil {
 		ctx.KubeClient = kubeClient
 	} else {
-		log.Println("[WARN] kubeconfig is not found. Kubernetes related checkers will not work.")
+		log.Println("[WARN] Kubernetes related checkers will not work due to: ", err)
 	}
 
 	return ctx, nil

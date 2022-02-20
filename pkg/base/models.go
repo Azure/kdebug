@@ -1,11 +1,16 @@
 package base
 
-import "github.com/Azure/kdebug/pkg/env"
+import (
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/Azure/kdebug/pkg/env"
+)
 
 type CheckContext struct {
 	// TODO: Add user input here
 	// TODO: Add shared dependencies here, for example, kube-client
 	Environment env.Environment
+	KubeClient  *kubernetes.Clientset
 }
 
 type CheckResult struct {

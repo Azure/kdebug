@@ -89,7 +89,7 @@ func (c *KubeObjectSizeChecker) checkObjectSize(kind, ns, name string, obj inter
 		return &base.CheckResult{
 			Checker:     c.Name(),
 			Error:       fmt.Sprintf("%s %s/%s reaching size limit.", kind, ns, name),
-			Description: fmt.Sprintf("%s %s/%s of size %d is reaching size limit. It cannot exceed 1MiB.", kind, ns, name, humanize.Bytes(uint64(len(data)))),
+			Description: fmt.Sprintf("%s %s/%s of size %s is reaching size limit. It cannot exceed 1MiB.", kind, ns, name, humanize.Bytes(uint64(len(data)))),
 			Recommendations: []string{
 				"Consider mounting a volume or use a separate database or file service.",
 			},

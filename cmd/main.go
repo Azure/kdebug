@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 
 	flags "github.com/jessevdk/go-flags"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -54,7 +54,9 @@ func buildContext(opts *Options) (*base.CheckContext, error) {
 	if err == nil {
 		ctx.KubeClient = kubeClient
 	} else {
-		log.Println("[WARN] Kubernetes related checkers will not work due to: ", err)
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Warn("Kubernetes related checkers will not work")
 	}
 
 	return ctx, nil

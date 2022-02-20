@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
+	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -31,8 +31,12 @@ func (c *KubeObjectSizeChecker) Name() string {
 func (c *KubeObjectSizeChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
 	results := []*base.CheckResult{}
 
-	results = append(results, c.checkConfigMaps(ctx.KubeClient)...)
-	results = append(results, c.checkSecrets(ctx.KubeClient)...)
+	if ctx.KubeClient != nil {
+		results = append(results, c.checkConfigMaps(ctx.KubeClient)...)
+		results = append(results, c.checkSecrets(ctx.KubeClient)...)
+	} else {
+		log.Warn("Skip KubeObjectSizeChecker due to missing kube client")
+	}
 
 	return results, nil
 }
@@ -42,7 +46,7 @@ func (c *KubeObjectSizeChecker) checkConfigMaps(clientset *kubernetes.Clientset)
 
 	cms, err := clientset.CoreV1().ConfigMaps("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		log.Println("[WARN] ", err)
+		log.WithFields(log.Fields{"error": err}).Warn("Fail to list config maps")
 		return results
 	}
 
@@ -61,7 +65,7 @@ func (c *KubeObjectSizeChecker) checkSecrets(clientset *kubernetes.Clientset) []
 
 	cms, err := clientset.CoreV1().Secrets("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		log.Println("[WARN] ", err)
+		log.WithFields(log.Fields{"error": err}).Warn("Fail to list secrets")
 		return results
 	}
 

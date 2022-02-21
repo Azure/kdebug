@@ -26,6 +26,8 @@ func (f *TextFormatter) WriteResults(w io.Writer, results []*base.CheckResult) e
 		return nil
 	}
 
+	fmt.Fprintf(w, "%d checks passed. %d failed.\n", len(results), len(failures))
+	fmt.Fprintf(w, "------------------------------\n")
 	fmt.Fprintf(w, "kdebug has detected these problems for you:\n")
 
 	for _, r := range failures {

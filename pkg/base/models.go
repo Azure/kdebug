@@ -8,6 +8,11 @@ import (
 
 type CheckContext struct {
 	// TODO: Add user input here
+	Pod struct {
+		Name      string
+		Namespace string
+	}
+
 	// TODO: Add shared dependencies here, for example, kube-client
 	Environment env.Environment
 	KubeClient  *kubernetes.Clientset

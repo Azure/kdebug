@@ -18,6 +18,12 @@ Run a specific suites:
 kdebug -s dns
 ```
 
+List available suites:
+
+```bash
+kdebug --list
+```
+
 ## Development
 
 Prerequisite:

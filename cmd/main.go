@@ -67,7 +67,10 @@ func main() {
 	var opts Options
 	_, err := flags.Parse(&opts)
 	if err != nil {
-		log.Fatal(err)
+		if !flags.WroteHelp(err) {
+			log.Fatal(err)
+		}
+		return
 	}
 
 	// Prepare dependencies

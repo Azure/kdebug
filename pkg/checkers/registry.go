@@ -1,6 +1,8 @@
 package checker
 
 import (
+	"sort"
+
 	"github.com/Azure/kdebug/pkg/checkers/diskusage"
 	"github.com/Azure/kdebug/pkg/checkers/dns"
 	"github.com/Azure/kdebug/pkg/checkers/dummy"
@@ -12,4 +14,13 @@ var allCheckers = map[string]Checker{
 	"dns":            dns.New(),
 	"kubeobjectsize": kubeobjectsize.New(),
 	"diskusage":      diskusage.New(),
+}
+
+func ListAllCheckerNames() []string {
+	names := make([]string, 0, len(allCheckers))
+	for n := range allCheckers {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names
 }

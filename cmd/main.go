@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -17,6 +18,7 @@ import (
 )
 
 type Options struct {
+	ListCheckers   bool     `short:"l" long:"list" description:"List all checkers"`
 	Suites         []string `short:"s" long:"suite" description:"Check suites"`
 	Format         string   `short:"f" long:"format" description:"Output format"`
 	KubeMasterUrl  string   `long:"kube-master-url" description:"Kubernetes API server URL"`
@@ -67,7 +69,15 @@ func main() {
 	var opts Options
 	_, err := flags.Parse(&opts)
 	if err != nil {
-		log.Fatal(err)
+		if !flags.WroteHelp(err) {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	if opts.ListCheckers {
+		fmt.Println(chks.ListAllCheckerNames())
+		return
 	}
 
 	// Prepare dependencies

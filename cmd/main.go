@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -17,10 +18,16 @@ import (
 )
 
 type Options struct {
+	ListCheckers   bool     `short:"l" long:"list" description:"List all checkers"`
 	Suites         []string `short:"s" long:"suite" description:"Check suites"`
 	Format         string   `short:"f" long:"format" description:"Output format"`
 	KubeMasterUrl  string   `long:"kube-master-url" description:"Kubernetes API server URL"`
 	KubeConfigPath string   `long:"kube-config-path" description:"Path to kubeconfig file"`
+
+	Pod struct {
+		Name      string `long:"name" description:"Pod name"`
+		Namespace string `long:"namespace" description:"Namespace the Pod runs in"`
+	} `group:"pod_info" namespace:"pod" description:"Information of a Pod"`
 }
 
 func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {
@@ -59,6 +66,11 @@ func buildContext(opts *Options) (*base.CheckContext, error) {
 		}).Warn("Kubernetes related checkers will not work")
 	}
 
+	ctx.Pod = struct {
+		Name      string
+		Namespace string
+	}(opts.Pod)
+
 	return ctx, nil
 }
 
@@ -67,7 +79,15 @@ func main() {
 	var opts Options
 	_, err := flags.Parse(&opts)
 	if err != nil {
-		log.Fatal(err)
+		if !flags.WroteHelp(err) {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	if opts.ListCheckers {
+		fmt.Println(chks.ListAllCheckerNames())
+		return
 	}
 
 	// Prepare dependencies

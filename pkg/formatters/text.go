@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/Azure/kdebug/pkg/base"
+	"github.com/Azure/kdebug/pkg/batch"
 )
 
 type TextFormatter struct{}
@@ -56,5 +57,13 @@ func (f *TextFormatter) WriteResults(w io.Writer, results []*base.CheckResult) e
 		}
 	}
 
+	return nil
+}
+
+func (f *TextFormatter) WriteBatchResults(w io.Writer, results []*batch.BatchResult) error {
+	for _, result := range results {
+		fmt.Fprintf(w, "=============== Machine: %s ===============\n", result.Machine)
+		f.WriteResults(w, result.CheckResults)
+	}
 	return nil
 }

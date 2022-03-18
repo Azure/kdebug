@@ -28,6 +28,12 @@ type Options struct {
 		Name      string `long:"name" description:"Pod name"`
 		Namespace string `long:"namespace" description:"Namespace the Pod runs in"`
 	} `group:"pod_info" namespace:"pod" description:"Information of a Pod"`
+
+	Batch struct {
+		Machines    []string `long:"machines" description:"Machine names"`
+		Concurrency int      `long:"concurrency" default:"4" description:"Batch concurrency"`
+		SshUser     string   `long:"sshuser" description:"SSH user"`
+	} `group:"batch" namespace:"batch" description:"Batch mode"`
 }
 
 func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {
@@ -90,6 +96,19 @@ func main() {
 		return
 	}
 
+	var formatter formatters.Formatter
+	if opts.Format == "json" {
+		formatter = &formatters.JsonFormatter{}
+	} else {
+		formatter = &formatters.TextFormatter{}
+	}
+
+	// Batch mode
+	if len(opts.Batch.Machines) > 0 {
+		runBatch(&opts, formatter)
+		return
+	}
+
 	// Prepare dependencies
 	ctx, err := buildContext(&opts)
 	if err != nil {
@@ -103,13 +122,6 @@ func main() {
 	}
 
 	// Output
-	var formatter formatters.Formatter
-	if opts.Format == "json" {
-		formatter = &formatters.JsonFormatter{}
-	} else {
-		formatter = &formatters.TextFormatter{}
-	}
-
 	err = formatter.WriteResults(os.Stdout, results)
 	if err != nil {
 		log.Fatal(err)

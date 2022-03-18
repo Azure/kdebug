@@ -3,11 +3,13 @@ module github.com/Azure/kdebug
 go 1.17
 
 require (
+	github.com/bramvdbogaerde/go-scp v1.2.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/miekg/dns v1.1.43
 	github.com/sirupsen/logrus v1.8.1
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	k8s.io/api v0.23.4
 	k8s.io/apimachinery v0.23.4
 	k8s.io/cli-runtime v0.23.4

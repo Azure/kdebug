@@ -24,6 +24,16 @@ List available suites:
 kdebug --list
 ```
 
+Batch mode:
+
+```
+kdebug -s dns \
+    --batch.machines=machine-1 \
+    --batch.machines=machine-2 \
+    --batch.concurrency=2 \
+    --batch.sshuser=azureuser
+```
+
 ## Development
 
 Prerequisite:

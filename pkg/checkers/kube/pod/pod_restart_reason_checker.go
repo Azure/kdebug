@@ -38,6 +38,11 @@ func (c *KubePodRestartReasonChecker) Name() string {
 
 // Check borrows many logic and helper functions from src/k8s.io/kubectl/pkg/describe to check Pod status and events.
 func (c *KubePodRestartReasonChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
+	if ctx.KubeClient == nil {
+		log.Warn("Skip KubePodRestartReasonChecker due to missing kube client")
+		return nil, nil
+	}
+
 	name, namespace := ctx.Pod.Name, ctx.Pod.Namespace
 	pod, err := ctx.KubeClient.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {

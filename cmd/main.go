@@ -23,6 +23,11 @@ type Options struct {
 	Format         string   `short:"f" long:"format" description:"Output format"`
 	KubeMasterUrl  string   `long:"kube-master-url" description:"Kubernetes API server URL"`
 	KubeConfigPath string   `long:"kube-config-path" description:"Path to kubeconfig file"`
+
+	Pod struct {
+		Name      string `long:"name" description:"Pod name"`
+		Namespace string `long:"namespace" description:"Namespace the Pod runs in"`
+	} `group:"pod_info" namespace:"pod" description:"Information of a Pod"`
 }
 
 func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {
@@ -60,6 +65,11 @@ func buildContext(opts *Options) (*base.CheckContext, error) {
 			"error": err,
 		}).Warn("Kubernetes related checkers will not work")
 	}
+
+	ctx.Pod = struct {
+		Name      string
+		Namespace string
+	}(opts.Pod)
 
 	return ctx, nil
 }

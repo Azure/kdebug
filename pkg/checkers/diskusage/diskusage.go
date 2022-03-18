@@ -14,7 +14,7 @@ import (
 
 const (
 	NoHighDiskUsageResult        = "Disk usage is in normal size. No additional action required."
-	HighUsageRecommandation      = "Run bash command: truncate -s 0 /path/to/file to reduce disk usage."
+	HighUsageRecommandation      = "Check files listed. If it's just log files or can be deleted, run bash command: `truncate -s 0 /path/to/file` to reduce disk usage. Note: `rm` will not really delete the file if it's opened by processes."
 	FailedToCheckDiskUsageWithDf = "Failed to check disk usage with 'df -h'"
 )
 
@@ -29,7 +29,7 @@ var (
 		"on",
 	}
 
-	DiskUsageRateThreshold = 70
+	DiskUsageRateThreshold = 3
 	InterestedBigFilePath  = []string{
 		"/var/log",
 	}
@@ -117,7 +117,7 @@ func (c *DiskUsageChecker) getDiskUsage() (*base.CheckResult, error) {
 
 	return &base.CheckResult{
 		Checker:     c.Name(),
-		Description: NoHighDiskUsageResult,
+		Description: fmt.Sprintf("%s Current %v%%, Threshold %v%%", NoHighDiskUsageResult, row.Use, DiskUsageRateThreshold),
 	}, nil
 }
 

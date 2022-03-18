@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"github.com/Azure/kdebug/pkg/base"
 	"github.com/Azure/kdebug/pkg/env"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
 	"strings"
 )
 
 const (
-	logPath   = "/var/log/kern.log"
-	oomKeyStr = "Memory cgroup out of memory"
+	logPath         = "/var/log/kern.log"
+	cgroupOOMKeyStr = "Memory cgroup out of memory"
+	outOfMemoryKey  = "Out of memory"
 )
 
 var helpLink = []string{
@@ -43,7 +43,7 @@ func (c *OOMChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) 
 	var results []*base.CheckResult
 	oomResult, err := c.checkOOM(ctx)
 	if err != nil {
-		log.Warnf("error while checking oom:%v\n", err)
+		return nil, err
 	}
 	results = append(results, oomResult)
 	return results, nil
@@ -81,7 +81,8 @@ func (c *OOMChecker) getAndParseOOMLog() ([]string, error) {
 	for scanner.Scan() {
 		tmp := scanner.Text()
 		//todo: more sophisticated OOM context
-		if strings.Contains(tmp, oomKeyStr) {
+		//pattern match. https://github.com/torvalds/linux/blob/551acdc3c3d2b6bc97f11e31dcf960bc36343bfc/mm/oom_kill.c#L1120, https://github.com/torvalds/linux/blob/551acdc3c3d2b6bc97f11e31dcf960bc36343bfc/mm/oom_kill.c#L895
+		if strings.Contains(tmp, cgroupOOMKeyStr) || strings.Contains(tmp, outOfMemoryKey) {
 			oomInfo, err := parseOOMContent(tmp)
 			if err != nil {
 				return nil, err

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Azure/kdebug/pkg/base"
 	"github.com/Azure/kdebug/pkg/env"
+	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -18,8 +19,11 @@ func TestCheckOOMLogWhenOOM(t *testing.T) {
 		fmt.Println("skip oom test")
 		return
 	}
-
-	check := OOMChecker{kernLogPath: "/tmp/kernlog"}
+	tmp, err := ioutil.TempFile("", "kernlog")
+	if err != nil {
+		t.Fatalf("error creating tmp file:%v", err)
+	}
+	check := OOMChecker{kernLogPath: tmp.Name()}
 	defer func() {
 		e := os.Remove(check.kernLogPath)
 		if e != nil {
@@ -27,7 +31,7 @@ func TestCheckOOMLogWhenOOM(t *testing.T) {
 		}
 	}()
 	//should be 600. But it fails in 600
-	err := os.WriteFile(check.kernLogPath, []byte(testString), 777)
+	err = os.WriteFile(check.kernLogPath, []byte(testString), 777)
 	if err != nil {
 		t.Errorf("Create tmp file error:%v", err)
 	}
@@ -38,7 +42,7 @@ func TestCheckOOMLogWhenOOM(t *testing.T) {
 		t.Errorf("Get unexpected OOM result length %v", len(result))
 	}
 	checkErr := result[0].Error
-	if checkErr != "progress:[3841 nginx] is OOM kill at time [Feb 22 16:15:02]. [rss:130344kB]\n" {
+	if checkErr != "progress:[3841 nginx] is OOM kill at time [Feb 22 16:15:02]. [rss:130344kB] [oom_score_adj:986]\n" {
 		t.Errorf("Unexpected check result:\n %v \n %v", result[0].Description, checkErr)
 	}
 

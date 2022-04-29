@@ -6,6 +6,8 @@ By running a set of predefined checkers, it gives diagnostics information and gu
 
 ## How to use
 
+### Basic
+
 Run all suites:
 
 ```bash
@@ -24,12 +26,44 @@ List available suites:
 kdebug --list
 ```
 
-Batch mode:
+### Kubernetes checkers
+
+Kubernetes related checkers require a working kubeconfig. You can either put it at the default location `$HOME/.kube/config`, or you can specify via `--kube-config-path`:
+
+```bash
+kdebug -s kubepod \
+    --kube-config-path /path/to/kubeconfig
+```
+
+### Batch mode
+
+kdebug supports running on a batch of remote machines simultaneously via SSH.
+
+Explictly specify a list of machine names:
 
 ```
 kdebug -s dns \
     --batch.machines=machine-1 \
     --batch.machines=machine-2 \
+    --batch.concurrency=2 \
+    --batch.sshuser=azureuser
+```
+
+Auto discover machines list via Kubernetes API server.
+
+```
+kdebug -s dns \
+    --batch.kube-machines \
+    --batch.concurrency=2 \
+    --batch.sshuser=azureuser
+```
+
+In addition, you can specify a label selector:
+
+```
+kdebug -s dns \
+    --batch.kube-machines \
+    --batch.kube-machines-label=kubernetes.io/role=agent \
     --batch.concurrency=2 \
     --batch.sshuser=azureuser
 ```

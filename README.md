@@ -46,7 +46,7 @@ kdebug -s dns \
     --batch.machines=machine-1 \
     --batch.machines=machine-2 \
     --batch.concurrency=2 \
-    --batch.sshuser=azureuser
+    --batch.ssh-user=azureuser
 ```
 
 Read machine names list from a file or stdin:

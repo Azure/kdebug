@@ -36,7 +36,7 @@ type Options struct {
 		Machines                  []string `long:"machines" description:"Machine names"`
 		MachinesFile              string   `long:"machines-file" description:"Path to a file that contains machine names list. Can use - to read from stdin."`
 		Concurrency               int      `long:"concurrency" default:"4" description:"Batch concurrency"`
-		SshUser                   string   `long:"sshuser" description:"SSH user"`
+		SshUser                   string   `long:"ssh-user" description:"SSH user"`
 	} `group:"batch" namespace:"batch" description:"Batch mode"`
 }
 

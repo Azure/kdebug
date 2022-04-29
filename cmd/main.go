@@ -30,7 +30,8 @@ type Options struct {
 	} `group:"pod_info" namespace:"pod" description:"Information of a Pod"`
 
 	Batch struct {
-		KubeMachines              bool     `long:"kube-machines" description:"Discover machine from Kubernetes API server"`
+		KubeMachines              bool     `long:"kube-machines" description:"Discover machines from Kubernetes API server"`
+		KubeMachinesUnready       bool     `long:"kube-machines-unready" description:"Discover unready machines from Kubernetes API server"`
 		KubeMachinesLabelSelector string   `long:"kube-machines-label" description:"Label selector for Kubernetes machines"`
 		Machines                  []string `long:"machines" description:"Machine names"`
 		MachinesFile              string   `long:"machines-file" description:"Path to a file that contains machine names list. Can use - to read from stdin."`
@@ -40,7 +41,7 @@ type Options struct {
 }
 
 func (o *Options) IsBatchMode() bool {
-	return o.Batch.KubeMachines || len(o.Batch.Machines) > 0 || len(o.Batch.MachinesFile) > 0
+	return o.Batch.KubeMachines || o.Batch.KubeMachinesUnready || len(o.Batch.Machines) > 0 || len(o.Batch.MachinesFile) > 0
 }
 
 func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {

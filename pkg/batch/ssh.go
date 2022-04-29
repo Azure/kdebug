@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/user"
 	"strings"
 
 	scp "github.com/bramvdbogaerde/go-scp"
@@ -16,6 +17,20 @@ import (
 
 type SshBatchExecutor struct {
 	User string
+}
+
+func NewSshBatchExecutor(userName string) *SshBatchExecutor {
+	e := &SshBatchExecutor{
+		User: userName,
+	}
+	if len(e.User) == 0 {
+		// Use current user
+		ui, err := user.Current()
+		if err == nil {
+			e.User = ui.Username
+		}
+	}
+	return e
 }
 
 func (e *SshBatchExecutor) Execute(opts *BatchOptions) ([]*BatchResult, error) {

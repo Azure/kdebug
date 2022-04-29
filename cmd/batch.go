@@ -13,6 +13,10 @@ import (
 func getBatchDiscoverer(opts *Options, chkCtx *base.CheckContext) batch.BatchDiscoverer {
 	if opts.Batch.KubeMachines {
 		return batch.NewKubeBatchDiscoverer(chkCtx.KubeClient, opts.Batch.KubeMachinesLabelSelector)
+	} else if opts.Batch.MachinesFile != "" {
+		return &batch.FileBatchDiscoverer{
+			Path: opts.Batch.MachinesFile,
+		}
 	} else {
 		return &batch.StaticBatchDiscoverer{
 			Machines: opts.Batch.Machines,
@@ -21,9 +25,7 @@ func getBatchDiscoverer(opts *Options, chkCtx *base.CheckContext) batch.BatchDis
 }
 
 func getBatchExecutor(opts *Options) batch.BatchExecutor {
-	return &batch.SshBatchExecutor{
-		User: opts.Batch.SshUser,
-	}
+	return batch.NewSshBatchExecutor(opts.Batch.SshUser)
 }
 
 func runBatch(opts *Options, chkCtx *base.CheckContext, formatter formatters.Formatter) {

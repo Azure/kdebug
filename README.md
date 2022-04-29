@@ -41,7 +41,7 @@ kdebug supports running on a batch of remote machines simultaneously via SSH.
 
 Explictly specify a list of machine names:
 
-```
+```bash
 kdebug -s dns \
     --batch.machines=machine-1 \
     --batch.machines=machine-2 \
@@ -49,23 +49,29 @@ kdebug -s dns \
     --batch.sshuser=azureuser
 ```
 
+Read machine names list from a file or stdin:
+
+```bash
+# From file
+kdebug -s dns \
+    --batch.machines-file=/path/to/machine/names/file
+
+# From stdin
+kubectl get nodes | grep NotReady | awk '{print $1}' | kdebug -s dns --batch.machines-file=-
+```
+
 Auto discover machines list via Kubernetes API server.
 
-```
-kdebug -s dns \
-    --batch.kube-machines \
-    --batch.concurrency=2 \
-    --batch.sshuser=azureuser
+```bash
+kdebug -s dns --batch.kube-machines
 ```
 
 In addition, you can specify a label selector:
 
-```
+```bash
 kdebug -s dns \
     --batch.kube-machines \
-    --batch.kube-machines-label=kubernetes.io/role=agent \
-    --batch.concurrency=2 \
-    --batch.sshuser=azureuser
+    --batch.kube-machines-label=kubernetes.io/role=agent
 ```
 
 ## Development

@@ -33,13 +33,14 @@ type Options struct {
 		KubeMachines              bool     `long:"kube-machines" description:"Discover machine from Kubernetes API server"`
 		KubeMachinesLabelSelector string   `long:"kube-machines-label" description:"Label selector for Kubernetes machines"`
 		Machines                  []string `long:"machines" description:"Machine names"`
+		MachinesFile              string   `long:"machines-file" description:"Path to a file that contains machine names list. Can use - to read from stdin."`
 		Concurrency               int      `long:"concurrency" default:"4" description:"Batch concurrency"`
 		SshUser                   string   `long:"sshuser" description:"SSH user"`
 	} `group:"batch" namespace:"batch" description:"Batch mode"`
 }
 
 func (o *Options) IsBatchMode() bool {
-	return o.Batch.KubeMachines || len(o.Batch.Machines) > 0
+	return o.Batch.KubeMachines || len(o.Batch.Machines) > 0 || len(o.Batch.MachinesFile) > 0
 }
 
 func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {

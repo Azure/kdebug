@@ -63,7 +63,11 @@ func (f *TextFormatter) WriteResults(w io.Writer, results []*base.CheckResult) e
 func (f *TextFormatter) WriteBatchResults(w io.Writer, results []*batch.BatchResult) error {
 	for _, result := range results {
 		fmt.Fprintf(w, "=============== Machine: %s ===============\n", result.Machine)
-		f.WriteResults(w, result.CheckResults)
+		if result.Error == nil {
+			f.WriteResults(w, result.CheckResults)
+		} else {
+			fmt.Fprintf(w, "Remote execution error: %s\n", result.Error)
+		}
 	}
 	return nil
 }

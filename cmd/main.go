@@ -30,10 +30,15 @@ type Options struct {
 	} `group:"pod_info" namespace:"pod" description:"Information of a Pod"`
 
 	Batch struct {
-		Machines    []string `long:"machines" description:"Machine names"`
-		Concurrency int      `long:"concurrency" default:"4" description:"Batch concurrency"`
-		SshUser     string   `long:"sshuser" description:"SSH user"`
+		KubeMachines bool     `long:"kube-machines" description:"Discover machine from Kubernetes API server"`
+		Machines     []string `long:"machines" description:"Machine names"`
+		Concurrency  int      `long:"concurrency" default:"4" description:"Batch concurrency"`
+		SshUser      string   `long:"sshuser" description:"SSH user"`
 	} `group:"batch" namespace:"batch" description:"Batch mode"`
+}
+
+func (o *Options) IsBatchMode() bool {
+	return o.Batch.KubeMachines || len(o.Batch.Machines) > 0
 }
 
 func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {
@@ -103,16 +108,16 @@ func main() {
 		formatter = &formatters.TextFormatter{}
 	}
 
-	// Batch mode
-	if len(opts.Batch.Machines) > 0 {
-		runBatch(&opts, formatter)
-		return
-	}
-
 	// Prepare dependencies
 	ctx, err := buildContext(&opts)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	// Batch mode
+	if opts.IsBatchMode() {
+		runBatch(&opts, ctx, formatter)
+		return
 	}
 
 	// Check

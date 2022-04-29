@@ -5,13 +5,18 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Azure/kdebug/pkg/base"
 	"github.com/Azure/kdebug/pkg/batch"
 	"github.com/Azure/kdebug/pkg/formatters"
 )
 
-func getBatchDiscoverer(opts *Options) batch.BatchDiscoverer {
-	return &batch.StaticBatchDiscoverer{
-		Machines: opts.Batch.Machines,
+func getBatchDiscoverer(opts *Options, chkCtx *base.CheckContext) batch.BatchDiscoverer {
+	if opts.Batch.KubeMachines {
+		return batch.NewKubeBatchDiscoverer(chkCtx.KubeClient)
+	} else {
+		return &batch.StaticBatchDiscoverer{
+			Machines: opts.Batch.Machines,
+		}
 	}
 }
 
@@ -21,11 +26,11 @@ func getBatchExecutor(opts *Options) batch.BatchExecutor {
 	}
 }
 
-func runBatch(opts *Options, formatter formatters.Formatter) {
-	discoverer := getBatchDiscoverer(opts)
+func runBatch(opts *Options, chkCtx *base.CheckContext, formatter formatters.Formatter) {
+	discoverer := getBatchDiscoverer(opts, chkCtx)
 	machines, err := discoverer.Discover()
 	if err != nil {
-		log.Fatal("Fail to discover machines", err)
+		log.Fatalf("Fail to discover machines: %+v", err)
 	}
 
 	executor := getBatchExecutor(opts)

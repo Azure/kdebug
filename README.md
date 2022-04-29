@@ -74,6 +74,13 @@ kdebug -s dns \
     --batch.kube-machines-label=kubernetes.io/role=agent
 ```
 
+Or filter out unready nodes only:
+
+```bash
+kdebug -s dns \
+    --batch.kube-machines-unready
+```
+
 ## Development
 
 Prerequisite:

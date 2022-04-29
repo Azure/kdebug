@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -12,12 +13,14 @@ import (
 type KubeBatchDiscoverer struct {
 	client        *kubernetes.Clientset
 	labelSelector string
+	unready       bool
 }
 
-func NewKubeBatchDiscoverer(client *kubernetes.Clientset, labelSelector string) *KubeBatchDiscoverer {
+func NewKubeBatchDiscoverer(client *kubernetes.Clientset, labelSelector string, unready bool) *KubeBatchDiscoverer {
 	return &KubeBatchDiscoverer{
 		client:        client,
 		labelSelector: labelSelector,
+		unready:       unready,
 	}
 }
 
@@ -38,8 +41,23 @@ func (d *KubeBatchDiscoverer) Discover() ([]string, error) {
 
 	var names []string
 	for _, node := range resp.Items {
-		names = append(names, node.ObjectMeta.Name)
+		if d.matchNode(&node) {
+			names = append(names, node.ObjectMeta.Name)
+		}
 	}
 
 	return names, nil
+}
+
+func (d *KubeBatchDiscoverer) matchNode(node *corev1.Node) bool {
+	if d.unready {
+		// Unready only
+		for _, cond := range node.Status.Conditions {
+			if cond.Type == corev1.NodeReady {
+				return cond.Status != corev1.ConditionTrue
+			}
+		}
+	}
+
+	return true
 }

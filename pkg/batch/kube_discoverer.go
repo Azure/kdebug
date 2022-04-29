@@ -10,12 +10,14 @@ import (
 )
 
 type KubeBatchDiscoverer struct {
-	client *kubernetes.Clientset
+	client        *kubernetes.Clientset
+	labelSelector string
 }
 
-func NewKubeBatchDiscoverer(client *kubernetes.Clientset) *KubeBatchDiscoverer {
+func NewKubeBatchDiscoverer(client *kubernetes.Clientset, labelSelector string) *KubeBatchDiscoverer {
 	return &KubeBatchDiscoverer{
-		client: client,
+		client:        client,
+		labelSelector: labelSelector,
 	}
 }
 
@@ -27,7 +29,9 @@ func (d *KubeBatchDiscoverer) Discover() ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	resp, err := d.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	resp, err := d.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{
+		LabelSelector: d.labelSelector,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Fail to list nodes from API server: %+v", err)
 	}

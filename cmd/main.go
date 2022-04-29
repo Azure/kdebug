@@ -30,10 +30,11 @@ type Options struct {
 	} `group:"pod_info" namespace:"pod" description:"Information of a Pod"`
 
 	Batch struct {
-		KubeMachines bool     `long:"kube-machines" description:"Discover machine from Kubernetes API server"`
-		Machines     []string `long:"machines" description:"Machine names"`
-		Concurrency  int      `long:"concurrency" default:"4" description:"Batch concurrency"`
-		SshUser      string   `long:"sshuser" description:"SSH user"`
+		KubeMachines              bool     `long:"kube-machines" description:"Discover machine from Kubernetes API server"`
+		KubeMachinesLabelSelector string   `long:"kube-machines-label" description:"Label selector for Kubernetes machines"`
+		Machines                  []string `long:"machines" description:"Machine names"`
+		Concurrency               int      `long:"concurrency" default:"4" description:"Batch concurrency"`
+		SshUser                   string   `long:"sshuser" description:"SSH user"`
 	} `group:"batch" namespace:"batch" description:"Batch mode"`
 }
 

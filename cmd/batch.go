@@ -12,7 +12,7 @@ import (
 
 func getBatchDiscoverer(opts *Options, chkCtx *base.CheckContext) batch.BatchDiscoverer {
 	if opts.Batch.KubeMachines {
-		return batch.NewKubeBatchDiscoverer(chkCtx.KubeClient)
+		return batch.NewKubeBatchDiscoverer(chkCtx.KubeClient, opts.Batch.KubeMachinesLabelSelector)
 	} else {
 		return &batch.StaticBatchDiscoverer{
 			Machines: opts.Batch.Machines,

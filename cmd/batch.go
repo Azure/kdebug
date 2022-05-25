@@ -1,8 +1,10 @@
 package main
 
 import (
+	"io"
 	"os"
 
+	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Azure/kdebug/pkg/base"
@@ -28,6 +30,22 @@ func getBatchExecutor(opts *Options) batch.BatchExecutor {
 	return batch.NewSshBatchExecutor(opts.Batch.SshUser)
 }
 
+type batchReporter struct {
+	out io.Writer
+	bar *progressbar.ProgressBar
+}
+
+func newBatchReporter(out io.Writer, max int64) *batchReporter {
+	return &batchReporter{
+		out: out,
+		bar: progressbar.Default(max),
+	}
+}
+
+func (r *batchReporter) OnResult(result *batch.BatchResult) {
+	r.bar.Add(1)
+}
+
 func runBatch(opts *Options, chkCtx *base.CheckContext, formatter formatters.Formatter) {
 	discoverer := getBatchDiscoverer(opts, chkCtx)
 	machines, err := discoverer.Discover()
@@ -46,6 +64,7 @@ func runBatch(opts *Options, chkCtx *base.CheckContext, formatter formatters.For
 		Machines:    machines,
 		Suites:      opts.Suites,
 		Concurrency: concurrency,
+		Reporter:    newBatchReporter(os.Stdout, int64(len(machines))),
 	}
 	batchResults, err := executor.Execute(batchOpts)
 	if err != nil {

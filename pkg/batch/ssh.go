@@ -52,7 +52,9 @@ func (e *SshBatchExecutor) Execute(opts *BatchOptions) ([]*BatchResult, error) {
 
 	results := make([]*BatchResult, 0, len(opts.Machines))
 	for i := 0; i < len(opts.Machines); i++ {
-		results = append(results, <-resultChan)
+		result := <-resultChan
+		results = append(results, result)
+		opts.Reporter.OnResult(result)
 	}
 
 	close(taskChan)
@@ -99,7 +101,7 @@ func (e *SshBatchExecutor) executeTask(task *batchTask) *BatchResult {
 	defer sshClient.Close()
 
 	// Copy binary to remote
-	log.Infof("Copy kdebug to %s", task.Machine)
+	log.Debugf("Copy kdebug to %s", task.Machine)
 	err = copyExecutable(sshClient)
 	if err != nil {
 		result.Error = fmt.Errorf("fail to copy kdebug to remote machine: %+v", err)
@@ -114,7 +116,7 @@ func (e *SshBatchExecutor) executeTask(task *batchTask) *BatchResult {
 	defer sess.Close()
 
 	// Execute command
-	log.Infof("Execute kdebug on %s", task.Machine)
+	log.Debugf("Execute kdebug on %s", task.Machine)
 	cmd := fmt.Sprintf("/tmp/kdebug -f json -s %s", strings.Join(task.Suites, ","))
 	output, err := sess.Output(cmd)
 	if err != nil {
@@ -123,7 +125,7 @@ func (e *SshBatchExecutor) executeTask(task *batchTask) *BatchResult {
 	}
 
 	// Build result
-	log.Infof("Aggregate results from %s", task.Machine)
+	log.Debugf("Aggregate results from %s", task.Machine)
 	result.Error = json.Unmarshal(output, &result.CheckResults)
 	return result
 }

@@ -6,6 +6,7 @@ type BatchOptions struct {
 	Machines    []string
 	Suites      []string
 	Concurrency int
+	Reporter    BatchReportor
 }
 
 type batchTask struct {
@@ -21,6 +22,10 @@ type BatchResult struct {
 
 type BatchExecutor interface {
 	Execute(opts *BatchOptions) ([]*BatchResult, error)
+}
+
+type BatchReportor interface {
+	OnResult(result *BatchResult)
 }
 
 type BatchDiscoverer interface {

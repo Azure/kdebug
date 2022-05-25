@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fatih/color"
 	flags "github.com/jessevdk/go-flags"
+	"github.com/mattn/go-isatty"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -25,6 +27,7 @@ type Options struct {
 	KubeMasterUrl  string   `long:"kube-master-url" description:"Kubernetes API server URL"`
 	KubeConfigPath string   `long:"kube-config-path" description:"Path to kubeconfig file"`
 	Verbose        string   `short:"v" long:"verbose" description:"Log level"`
+	NoColor        bool     `long:"no-color" description:"Disable colorized output"`
 
 	Pod struct {
 		Name      string `long:"name" description:"Pod name"`
@@ -107,6 +110,10 @@ func main() {
 			log.Fatal(err)
 		}
 		logrus.SetLevel(logLevel)
+	}
+
+	if !isatty.IsTerminal(os.Stdout.Fd()) || opts.NoColor {
+		color.NoColor = true
 	}
 
 	if opts.ListCheckers {

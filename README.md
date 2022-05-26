@@ -4,6 +4,16 @@ kdebug is a command line utility that helps troubleshoot a running Kubernetes cl
 
 By running a set of predefined checkers, it gives diagnostics information and guides you to next steps.
 
+## Checkers
+
+Currently kdebug supports following checkers:
+
+* Disk usage: Check disk usage and identity top large files.
+* DNS: Check cluster DNS.
+* Kube Object Size: Check configmap/secret object size.
+* Kube pod: Check pod restart reasons.
+* OOM: Analysis out-of-memory events.
+
 ## How to use
 
 ### Basic

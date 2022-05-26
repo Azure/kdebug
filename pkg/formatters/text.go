@@ -69,7 +69,8 @@ func (f *TextFormatter) WriteResults(w io.Writer, results []*base.CheckResult) e
 
 func (f *TextFormatter) WriteBatchResults(w io.Writer, results []*batch.BatchResult) error {
 	for _, result := range results {
-		fmt.Fprintf(w, "=============== Machine: %s ===============\n", result.Machine)
+		fmt.Fprintf(w, color.BlueString("=============== Machine: %s ===============\n",
+			result.Machine))
 		if result.Error == nil {
 			f.WriteResults(w, result.CheckResults)
 		} else {

@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/user"
-	"strings"
 
 	scp "github.com/bramvdbogaerde/go-scp"
 	log "github.com/sirupsen/logrus"
@@ -116,8 +115,11 @@ func (e *SshBatchExecutor) executeTask(task *batchTask) *BatchResult {
 	defer sess.Close()
 
 	// Execute command
-	log.Debugf("Execute kdebug on %s", task.Machine)
-	cmd := fmt.Sprintf("/tmp/kdebug -f json -s %s", strings.Join(task.Suites, ","))
+	cmd := fmt.Sprintf("/tmp/kdebug -f json")
+	for _, s := range task.Suites {
+		cmd += fmt.Sprintf(" -s %s", s)
+	}
+	log.Debugf("Execute kdebug on %s. Cmd: %s", task.Machine, cmd)
 	output, err := sess.Output(cmd)
 	if err != nil {
 		result.Error = fmt.Errorf("fail to run kdebug on remote machine: %+v", err)

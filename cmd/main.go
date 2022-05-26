@@ -49,6 +49,13 @@ func (o *Options) IsBatchMode() bool {
 	return o.Batch.KubeMachines || o.Batch.KubeMachinesUnready || len(o.Batch.Machines) > 0 || len(o.Batch.MachinesFile) > 0
 }
 
+func processOptions(o *Options) {
+	// Run all suites if not specified
+	if len(o.Suites) == 0 {
+		o.Suites = chks.ListAllCheckerNames()
+	}
+}
+
 func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {
 	// Try env
 	if kubeConfigPath == "" {
@@ -103,6 +110,8 @@ func main() {
 		}
 		return
 	}
+
+	processOptions(&opts)
 
 	if len(opts.Verbose) > 0 {
 		logLevel, err := logrus.ParseLevel(opts.Verbose)

@@ -15,17 +15,11 @@ type Checker interface {
 func Check(ctx *base.CheckContext, suites []string) ([]*base.CheckResult, error) {
 	checkers := make([]Checker, 0, len(suites))
 
-	if len(suites) == 0 {
-		for _, checker := range allCheckers {
+	for _, suite := range suites {
+		if checker, ok := allCheckers[suite]; ok {
 			checkers = append(checkers, checker)
-		}
-	} else {
-		for _, suite := range suites {
-			if checker, ok := allCheckers[suite]; ok {
-				checkers = append(checkers, checker)
-			} else {
-				return nil, errors.New("Unknown checker: " + suite)
-			}
+		} else {
+			return nil, errors.New("Unknown checker: " + suite)
 		}
 	}
 

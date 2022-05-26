@@ -44,7 +44,7 @@ var (
 		},
 	}
 	AksCoreDnsServerPublic = DnsServer{
-		Name:   "AKS Core DNS",
+		Name:   "AKS CoreDNS",
 		Server: "10.0.0.10",
 		Queries: []string{
 			"www.google.com",
@@ -60,7 +60,7 @@ var (
 		},
 	}
 	AksCoreDnsServerInCluster = DnsServer{
-		Name:   "AKS Core DNS",
+		Name:   "AKS CoreDNS",
 		Server: "10.0.0.10",
 		Queries: []string{
 			"kubernetes.default.svc.cluster.local",

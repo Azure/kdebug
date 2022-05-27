@@ -18,7 +18,7 @@ func Run(ctx *base.ToolContext, suite string) error {
 			return err
 		}
 	} else {
-		return errors.New("Unknown checker: " + suite)
+		return errors.New("Unknown tool: " + suite)
 	}
 
 	return nil

@@ -12,14 +12,14 @@ type Checker interface {
 	Check(*base.CheckContext) ([]*base.CheckResult, error)
 }
 
-func Check(ctx *base.CheckContext, suites []string) ([]*base.CheckResult, error) {
-	checkers := make([]Checker, 0, len(suites))
+func Check(ctx *base.CheckContext, checkerNames []string) ([]*base.CheckResult, error) {
+	checkers := make([]Checker, 0, len(checkerNames))
 
-	for _, suite := range suites {
-		if checker, ok := allCheckers[suite]; ok {
+	for _, name := range checkerNames {
+		if checker, ok := allCheckers[name]; ok {
 			checkers = append(checkers, checker)
 		} else {
-			return nil, errors.New("Unknown checker: " + suite)
+			return nil, errors.New("Unknown checker: " + name)
 		}
 	}
 

@@ -62,7 +62,7 @@ func runBatch(opts *Options, chkCtx *base.CheckContext, formatter formatters.For
 	}
 	batchOpts := &batch.BatchOptions{
 		Machines:    machines,
-		Suites:      opts.Suites,
+		Checkers:    opts.Checkers,
 		Concurrency: concurrency,
 		Reporter:    newBatchReporter(os.Stdout, int64(len(machines))),
 	}

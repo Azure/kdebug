@@ -4,14 +4,14 @@ import "github.com/Azure/kdebug/pkg/base"
 
 type BatchOptions struct {
 	Machines    []string
-	Suites      []string
+	Checkers    []string
 	Concurrency int
 	Reporter    BatchReportor
 }
 
 type batchTask struct {
-	Machine string
-	Suites  []string
+	Machine  string
+	Checkers []string
 }
 
 type BatchResult struct {

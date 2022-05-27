@@ -8,10 +8,10 @@ import (
 
 type Tool interface {
 	Name() string
-	Run(*base.CheckContext) error
+	Run(*base.ToolContext) error
 }
 
-func Run(ctx *base.CheckContext, suite string) error {
+func Run(ctx *base.ToolContext, suite string) error {
 	if tool, ok := allTools[suite]; ok {
 		err := tool.Run(ctx)
 		if err != nil {

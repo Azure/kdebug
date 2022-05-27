@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/kdebug/pkg/base"
 )
 
-type TcpDumpTool struct {
+type TcpdumpTool struct {
 	srcIP    string
 	srcPort  string
 	dstIP    string
@@ -20,15 +20,19 @@ type TcpDumpTool struct {
 	tcpOnly  bool
 }
 
-func New() *TcpDumpTool {
-	return &TcpDumpTool{}
+const (
+	DefaultTcpdumpArguments = "-nvvv"
+)
+
+func New() *TcpdumpTool {
+	return &TcpdumpTool{}
 }
 
-func (c *TcpDumpTool) Name() string {
-	return "TcpDump"
+func (c *TcpdumpTool) Name() string {
+	return "Tcpdump"
 }
 
-func (c *TcpDumpTool) Run(ctx *base.CheckContext) error {
+func (c *TcpdumpTool) Run(ctx *base.ToolContext) error {
 	c.ParseParameters(ctx)
 	tcpdumpArgs := c.GenerateTcpdumpParamerters()
 
@@ -48,7 +52,7 @@ func (c *TcpDumpTool) Run(ctx *base.CheckContext) error {
 	return err
 }
 
-func (c *TcpDumpTool) ParseParameters(ctx *base.CheckContext) {
+func (c *TcpdumpTool) ParseParameters(ctx *base.ToolContext) {
 	c.srcIP, c.srcPort = ParseIPAndPort(ctx.Tcpdump.Source)
 	c.dstIP, c.dstPort = ParseIPAndPort(ctx.Tcpdump.Destination)
 	c.hostIP, c.hostPort = ParseIPAndPort(ctx.Tcpdump.Host)
@@ -56,39 +60,30 @@ func (c *TcpDumpTool) ParseParameters(ctx *base.CheckContext) {
 	c.tcpOnly = ctx.Tcpdump.TcpOnly
 }
 
-func (c *TcpDumpTool) GenerateTcpdumpParamerters() string {
-	cmd := "-nvvv "
-	firstCmd := true
+func (c *TcpdumpTool) GenerateTcpdumpParamerters() string {
+	var cmd []string
 	if len(c.srcIP) > 0 {
-		cmd += AppendCmd(fmt.Sprintf("src %s", c.srcIP), &firstCmd)
+		cmd = append(cmd, fmt.Sprintf("src %s", c.srcIP))
 	}
 	if len(c.srcPort) > 0 {
-		cmd += AppendCmd(fmt.Sprintf("src port %s", c.srcPort), &firstCmd)
+		cmd = append(cmd, fmt.Sprintf("src port %s", c.srcPort))
 	}
 	if len(c.dstIP) > 0 {
-		cmd += AppendCmd(fmt.Sprintf("dst %s", c.dstIP), &firstCmd)
+		cmd = append(cmd, fmt.Sprintf("dst %s", c.dstIP))
 	}
 	if len(c.dstPort) > 0 {
-		cmd += AppendCmd(fmt.Sprintf("dst port %s", c.dstPort), &firstCmd)
+		cmd = append(cmd, fmt.Sprintf("dst port %s", c.dstPort))
 	}
 	if len(c.hostIP) > 0 {
-		cmd += AppendCmd(fmt.Sprintf("host %s", c.hostIP), &firstCmd)
+		cmd = append(cmd, fmt.Sprintf("host %s", c.hostIP))
 	}
 	if len(c.hostPort) > 0 {
-		cmd += AppendCmd(fmt.Sprintf("port %s", c.hostPort), &firstCmd)
+		cmd = append(cmd, fmt.Sprintf("port %s", c.hostPort))
 	}
 	if c.tcpOnly {
-		cmd += AppendCmd("tcp", &firstCmd)
+		cmd = append(cmd, "tcp")
 	}
-	return cmd
-}
-
-func AppendCmd(s string, firstCmd *bool) string {
-	if *firstCmd {
-		*firstCmd = false
-		return s
-	}
-	return fmt.Sprintf(" and %s", s)
+	return DefaultTcpdumpArguments + " " + strings.Join(cmd, " and ")
 }
 
 func ParseIPAndPort(s string) (ip string, port string) {

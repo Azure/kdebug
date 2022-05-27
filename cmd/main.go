@@ -46,13 +46,7 @@ type Options struct {
 		SshUser                   string   `long:"ssh-user" description:"SSH user"`
 	} `group:"batch" namespace:"batch" description:"Batch mode"`
 
-	Tcpdump struct {
-		Source      string `long:"source" description:"The source of the connection. Format: <ip>:<port>. Watch all sources if not assigned."`
-		Destination string `long:"destination" description:"The destination of the connection. Format: <ip>:<port>. Watch all destination if not assigned."`
-		Host        string `long:"host" description:"The host(either src or dst) of the connection. Format: <ip>:<port>. Watch if not assigned."`
-		Pid         string `short:"p" long:"pid" description:"Attach into a specific pid's network namespace. Use current namespace if not assigned"`
-		TcpOnly     bool   `long:"tcponly" description:"Only watch tcp connections"`
-	} `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
+	Tcpdump base.Tcpdump `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
 }
 
 func (o *Options) IsBatchMode() bool {
@@ -92,7 +86,7 @@ func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, e
 	return kubernetes.NewForConfig(config)
 }
 
-func buildContext(opts *Options) (*base.CheckContext, error) {
+func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 	ctx := &base.CheckContext{
 		Environment: env.GetEnvironment(),
 	}
@@ -111,13 +105,12 @@ func buildContext(opts *Options) (*base.CheckContext, error) {
 		Namespace string
 	}(opts.Pod)
 
-	ctx.Tcpdump = struct {
-		Source      string
-		Destination string
-		Host        string
-		Pid         string
-		TcpOnly     bool
-	}(opts.Tcpdump)
+	return ctx, nil
+}
+
+func buildToolContext(opts *Options) (*base.ToolContext, error) {
+	ctx := &base.ToolContext{}
+	ctx.Tcpdump = opts.Tcpdump
 
 	return ctx, nil
 }
@@ -162,16 +155,24 @@ func main() {
 		formatter = &formatters.TextFormatter{}
 	}
 
-	// Prepare dependencies
-	ctx, err := buildContext(&opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Tool Mode
 	if opts.IsToolMode() {
-		runToolMode(ctx, &opts)
+		ctx, err := buildToolContext(&opts)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = tools.Run(ctx, opts.Tool)
+		if err != nil {
+			log.Fatal(err)
+		}
 		return
+	}
+
+	// Prepare dependencies
+	ctx, err := buildCheckContext(&opts)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Batch mode
@@ -188,13 +189,6 @@ func main() {
 
 	// Output
 	err = formatter.WriteResults(os.Stdout, results)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func runToolMode(ctx *base.CheckContext, opts *Options) {
-	err := tools.Run(ctx, opts.Tool)
 	if err != nil {
 		log.Fatal(err)
 	}

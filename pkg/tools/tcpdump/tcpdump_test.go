@@ -28,17 +28,11 @@ func TestParseIPAndPort_Success(t *testing.T) {
 	}
 }
 
-func GenerateTcpdumpParamerters_Success(t *testing.T) {
+func TestGenerateTcpdumpParamerters_Success(t *testing.T) {
 	tcpdumptool := New()
 
-	ctx := &base.CheckContext{
-		Tcpdump: struct {
-			Source      string
-			Destination string
-			Host        string
-			Pid         string
-			TcpOnly     bool
-		}{"192.168.1.1:1", "23.32.10.2:80", ":443", "19920", true},
+	ctx := &base.ToolContext{
+		Tcpdump: base.Tcpdump{"192.168.1.1:1", "23.32.10.2:80", ":443", "19920", true},
 	}
 	tcpdumptool.ParseParameters(ctx)
 	parameter := tcpdumptool.GenerateTcpdumpParamerters()

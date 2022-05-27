@@ -22,7 +22,6 @@ func Check(ctx *base.CheckContext, suites []string) ([]*base.CheckResult, error)
 			return nil, errors.New("Unknown checker: " + suite)
 		}
 	}
-
 	var results []*base.CheckResult
 	for _, checker := range checkers {
 		r, err := checker.Check(ctx)

@@ -43,8 +43,8 @@ func (e *SshBatchExecutor) Execute(opts *BatchOptions) ([]*BatchResult, error) {
 	for _, machine := range opts.Machines {
 		go func(m string) {
 			taskChan <- &batchTask{
-				Machine: m,
-				Suites:  opts.Suites,
+				Machine:  m,
+				Checkers: opts.Checkers,
 			}
 		}(machine)
 	}
@@ -116,8 +116,8 @@ func (e *SshBatchExecutor) executeTask(task *batchTask) *BatchResult {
 
 	// Execute command
 	cmd := fmt.Sprintf("/tmp/kdebug -f json")
-	for _, s := range task.Suites {
-		cmd += fmt.Sprintf(" -s %s", s)
+	for _, c := range task.Checkers {
+		cmd += fmt.Sprintf(" -c %s", c)
 	}
 	log.Debugf("Execute kdebug on %s. Cmd: %s", task.Machine, cmd)
 	output, err := sess.Output(cmd)

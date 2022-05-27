@@ -21,8 +21,8 @@ import (
 )
 
 type Options struct {
-	ListCheckers   bool     `short:"l" long:"list" description:"List all checkers"`
-	Suites         []string `short:"s" long:"suite" description:"Check suites"`
+	ListCheckers   bool     `short:"l" long:"list" description:"List all checks"`
+	Checkers       []string `short:"c" long:"check" description:"Check name. Can specify multiple times."`
 	Format         string   `short:"f" long:"format" description:"Output format"`
 	KubeMasterUrl  string   `long:"kube-master-url" description:"Kubernetes API server URL"`
 	KubeConfigPath string   `long:"kube-config-path" description:"Path to kubeconfig file"`
@@ -50,9 +50,9 @@ func (o *Options) IsBatchMode() bool {
 }
 
 func processOptions(o *Options) {
-	// Run all suites if not specified
-	if len(o.Suites) == 0 {
-		o.Suites = chks.ListAllCheckerNames()
+	// Run all checkers if not specified
+	if len(o.Checkers) == 0 {
+		o.Checkers = chks.ListAllCheckerNames()
 	}
 }
 
@@ -150,7 +150,7 @@ func main() {
 	}
 
 	// Check
-	results, err := chks.Check(ctx, opts.Suites)
+	results, err := chks.Check(ctx, opts.Checkers)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,11 +2,11 @@
 
 kdebug is a command line utility that helps troubleshoot a running Kubernetes cluster and apps in it.
 
-By running a set of predefined checkers, it gives diagnostics information and guides you to next steps.
+By running a set of predefined checks, it gives diagnostics information and guides you to next steps.
 
-## Checkers
+## Checks
 
-Currently kdebug supports following checkers:
+Currently kdebug supports following checks:
 
 * Disk usage: Check disk usage and identity top large files.
 * DNS: Check cluster DNS.
@@ -18,30 +18,30 @@ Currently kdebug supports following checkers:
 
 ### Basic
 
-Run all suites:
+Run all checks:
 
 ```bash
 kdebug
 ```
 
-Run a specific suites:
+Run a specific check:
 
 ```bash
-kdebug -s dns
+kdebug -c dns
 ```
 
-List available suites:
+List available checks:
 
 ```bash
 kdebug --list
 ```
 
-### Kubernetes checkers
+### Kubernetes checks
 
-Kubernetes related checkers require a working kubeconfig. You can either put it at the default location `$HOME/.kube/config`, or you can specify via `--kube-config-path`:
+Kubernetes related checks require a working kubeconfig. You can either put it at the default location `$HOME/.kube/config`, or you can specify via `--kube-config-path`:
 
 ```bash
-kdebug -s kubepod \
+kdebug -c kubepod \
     --kube-config-path /path/to/kubeconfig
 ```
 
@@ -52,7 +52,7 @@ kdebug supports running on a batch of remote machines simultaneously via SSH.
 Explictly specify a list of machine names:
 
 ```bash
-kdebug -s dns \
+kdebug -c dns \
     --batch.machines=machine-1 \
     --batch.machines=machine-2 \
     --batch.concurrency=2 \
@@ -63,23 +63,23 @@ Read machine names list from a file or stdin:
 
 ```bash
 # From file
-kdebug -s dns \
+kdebug -c dns \
     --batch.machines-file=/path/to/machine/names/file
 
 # From stdin
-kubectl get nodes | grep NotReady | awk '{print $1}' | kdebug -s dns --batch.machines-file=-
+kubectl get nodes | grep NotReady | awk '{print $1}' | kdebug -c dns --batch.machines-file=-
 ```
 
 Auto discover machines list via Kubernetes API server.
 
 ```bash
-kdebug -s dns --batch.kube-machines
+kdebug -c dns --batch.kube-machines
 ```
 
 In addition, you can specify a label selector:
 
 ```bash
-kdebug -s dns \
+kdebug -c dns \
     --batch.kube-machines \
     --batch.kube-machines-label=kubernetes.io/role=agent
 ```
@@ -87,7 +87,7 @@ kdebug -s dns \
 Or filter out unready nodes only:
 
 ```bash
-kdebug -s dns \
+kdebug -c dns \
     --batch.kube-machines-unready
 ```
 

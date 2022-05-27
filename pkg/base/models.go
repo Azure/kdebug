@@ -13,6 +13,14 @@ type CheckContext struct {
 		Namespace string
 	}
 
+	Tcpdump struct {
+		Source      string
+		Destination string
+		Host        string
+		Pid         string
+		TcpOnly     bool
+	}
+
 	// TODO: Add shared dependencies here, for example, kube-client
 	Environment env.Environment
 	KubeClient  *kubernetes.Clientset

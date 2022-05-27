@@ -18,11 +18,13 @@ import (
 	chks "github.com/Azure/kdebug/pkg/checkers"
 	"github.com/Azure/kdebug/pkg/env"
 	"github.com/Azure/kdebug/pkg/formatters"
+	tools "github.com/Azure/kdebug/pkg/tools"
 )
 
 type Options struct {
 	ListCheckers   bool     `short:"l" long:"list" description:"List all checks"`
 	Checkers       []string `short:"c" long:"check" description:"Check name. Can specify multiple times."`
+	Tool           string   `short:"t" long:"tool" description:"Use tool"`
 	Format         string   `short:"f" long:"format" description:"Output format"`
 	KubeMasterUrl  string   `long:"kube-master-url" description:"Kubernetes API server URL"`
 	KubeConfigPath string   `long:"kube-config-path" description:"Path to kubeconfig file"`
@@ -43,10 +45,22 @@ type Options struct {
 		Concurrency               int      `long:"concurrency" default:"4" description:"Batch concurrency"`
 		SshUser                   string   `long:"ssh-user" description:"SSH user"`
 	} `group:"batch" namespace:"batch" description:"Batch mode"`
+
+	Tcpdump struct {
+		Source      string `long:"source" description:"The source of the connection. Format: <ip>:<port>. Watch all sources if not assigned."`
+		Destination string `long:"destination" description:"The destination of the connection. Format: <ip>:<port>. Watch all destination if not assigned."`
+		Host        string `long:"host" description:"The host(either src or dst) of the connection. Format: <ip>:<port>. Watch if not assigned."`
+		Pid         string `short:"p" long:"pid" description:"Attach into a specific pid's network namespace. Use current namespace if not assigned"`
+		TcpOnly     bool   `long:"tcponly" description:"Only watch tcp connections"`
+	} `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
 }
 
 func (o *Options) IsBatchMode() bool {
 	return o.Batch.KubeMachines || o.Batch.KubeMachinesUnready || len(o.Batch.Machines) > 0 || len(o.Batch.MachinesFile) > 0
+}
+
+func (o *Options) IsToolMode() bool {
+	return len(o.Tool) > 0
 }
 
 func processOptions(o *Options) {
@@ -97,6 +111,14 @@ func buildContext(opts *Options) (*base.CheckContext, error) {
 		Namespace string
 	}(opts.Pod)
 
+	ctx.Tcpdump = struct {
+		Source      string
+		Destination string
+		Host        string
+		Pid         string
+		TcpOnly     bool
+	}(opts.Tcpdump)
+
 	return ctx, nil
 }
 
@@ -126,7 +148,10 @@ func main() {
 	}
 
 	if opts.ListCheckers {
+		fmt.Print("checks: ")
 		fmt.Println(chks.ListAllCheckerNames())
+		fmt.Print("tools: ")
+		fmt.Println(tools.ListAllToolNames())
 		return
 	}
 
@@ -143,6 +168,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Tool Mode
+	if opts.IsToolMode() {
+		runToolMode(ctx, &opts)
+		return
+	}
+
 	// Batch mode
 	if opts.IsBatchMode() {
 		runBatch(&opts, ctx, formatter)
@@ -157,6 +188,13 @@ func main() {
 
 	// Output
 	err = formatter.WriteResults(os.Stdout, results)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func runToolMode(ctx *base.CheckContext, opts *Options) {
+	err := tools.Run(ctx, opts.Tool)
 	if err != nil {
 		log.Fatal(err)
 	}

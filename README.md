@@ -2,26 +2,112 @@
 
 kdebug is a command line utility that helps troubleshoot a running Kubernetes cluster and apps in it.
 
-By running a set of predefined checkers, it gives diagnostics information and guides you to next steps.
+By running a set of predefined checks, it gives diagnostics information and guides you to next steps.
+
+## Checks
+
+Currently kdebug supports following checks:
+
+* Disk usage: Check disk usage and identity top large files.
+* DNS: Check cluster DNS.
+* Kube Object Size: Check configmap/secret object size.
+* Kube pod: Check pod restart reasons.
+* OOM: Analysis out-of-memory events.
+
+## Tools
+
+Currently kdebug supports following tools:
+* Tcp Dump: Attch into a process's network namespace and dump network traffic
 
 ## How to use
 
-Run all suites:
+### Basic
+
+Run all checks:
 
 ```bash
 kdebug
 ```
 
-Run a specific suites:
+Run a specific check:
 
 ```bash
-kdebug -s dns
+kdebug -c dns
 ```
 
-List available suites:
+List available checks:
 
 ```bash
 kdebug --list
+```
+
+### Kubernetes checks
+
+Kubernetes related checks require a working kubeconfig. You can either put it at the default location `$HOME/.kube/config`, or you can specify via `--kube-config-path`:
+
+```bash
+kdebug -c kubepod \
+    --kube-config-path /path/to/kubeconfig
+```
+
+### Batch mode
+
+kdebug supports running on a batch of remote machines simultaneously via SSH.
+
+Explictly specify a list of machine names:
+
+```bash
+kdebug -c dns \
+    --batch.machines=machine-1 \
+    --batch.machines=machine-2 \
+    --batch.concurrency=2 \
+    --batch.ssh-user=azureuser
+```
+
+Read machine names list from a file or stdin:
+
+```bash
+# From file
+kdebug -c dns \
+    --batch.machines-file=/path/to/machine/names/file
+
+# From stdin
+kubectl get nodes | grep NotReady | awk '{print $1}' | kdebug -c dns --batch.machines-file=-
+```
+
+Auto discover machines list via Kubernetes API server.
+
+```bash
+kdebug -c dns --batch.kube-machines
+```
+
+In addition, you can specify a label selector:
+
+```bash
+kdebug -c dns \
+    --batch.kube-machines \
+    --batch.kube-machines-label=kubernetes.io/role=agent
+```
+
+Or filter out unready nodes only:
+
+```bash
+kdebug -c dns \
+    --batch.kube-machines-unready
+```
+
+### Tool mode
+
+kdebug supports tool mode that is a wrapper of some useful commands. Check available tool mode suit with
+```bash
+kdebug --list
+
+#tools: [tcpdump]
+```
+
+Use tool mode with the following command:
+```bash
+kdebug -t <suit>
 ```
 
 ## Development

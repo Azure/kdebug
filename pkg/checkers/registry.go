@@ -6,6 +6,7 @@ import (
 	"github.com/Azure/kdebug/pkg/checkers/diskusage"
 	"github.com/Azure/kdebug/pkg/checkers/dns"
 	"github.com/Azure/kdebug/pkg/checkers/dummy"
+	"github.com/Azure/kdebug/pkg/checkers/http"
 	kubeobjectsize "github.com/Azure/kdebug/pkg/checkers/kube/objectsize"
 	"github.com/Azure/kdebug/pkg/checkers/kube/pod"
 	"github.com/Azure/kdebug/pkg/checkers/liveness"
@@ -20,6 +21,7 @@ var allCheckers = map[string]Checker{
 	"diskusage":      diskusage.New(),
 	"kubepod":        pod.New(),
 	"liveness":       liveness.New(),
+	"http":           http.New(),
 }
 
 func ListAllCheckerNames() []string {

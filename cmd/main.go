@@ -18,11 +18,13 @@ import (
 	chks "github.com/Azure/kdebug/pkg/checkers"
 	"github.com/Azure/kdebug/pkg/env"
 	"github.com/Azure/kdebug/pkg/formatters"
+	tools "github.com/Azure/kdebug/pkg/tools"
 )
 
 type Options struct {
 	ListCheckers   bool     `short:"l" long:"list" description:"List all checks"`
 	Checkers       []string `short:"c" long:"check" description:"Check name. Can specify multiple times."`
+	Tool           string   `short:"t" long:"tool" description:"Use tool"`
 	Format         string   `short:"f" long:"format" description:"Output format"`
 	KubeMasterUrl  string   `long:"kube-master-url" description:"Kubernetes API server URL"`
 	KubeConfigPath string   `long:"kube-config-path" description:"Path to kubeconfig file"`
@@ -43,10 +45,16 @@ type Options struct {
 		Concurrency               int      `long:"concurrency" default:"4" description:"Batch concurrency"`
 		SshUser                   string   `long:"ssh-user" description:"SSH user"`
 	} `group:"batch" namespace:"batch" description:"Batch mode"`
+
+	Tcpdump base.Tcpdump `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
 }
 
 func (o *Options) IsBatchMode() bool {
 	return o.Batch.KubeMachines || o.Batch.KubeMachinesUnready || len(o.Batch.Machines) > 0 || len(o.Batch.MachinesFile) > 0
+}
+
+func (o *Options) IsToolMode() bool {
+	return len(o.Tool) > 0
 }
 
 func processOptions(o *Options) {
@@ -78,7 +86,7 @@ func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, e
 	return kubernetes.NewForConfig(config)
 }
 
-func buildContext(opts *Options) (*base.CheckContext, error) {
+func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 	ctx := &base.CheckContext{
 		Environment: env.GetEnvironment(),
 	}
@@ -96,6 +104,13 @@ func buildContext(opts *Options) (*base.CheckContext, error) {
 		Name      string
 		Namespace string
 	}(opts.Pod)
+
+	return ctx, nil
+}
+
+func buildToolContext(opts *Options) (*base.ToolContext, error) {
+	ctx := &base.ToolContext{}
+	ctx.Tcpdump = opts.Tcpdump
 
 	return ctx, nil
 }
@@ -126,7 +141,10 @@ func main() {
 	}
 
 	if opts.ListCheckers {
+		fmt.Print("checks: ")
 		fmt.Println(chks.ListAllCheckerNames())
+		fmt.Print("tools: ")
+		fmt.Println(tools.ListAllToolNames())
 		return
 	}
 
@@ -137,8 +155,22 @@ func main() {
 		formatter = &formatters.TextFormatter{}
 	}
 
+	// Tool Mode
+	if opts.IsToolMode() {
+		ctx, err := buildToolContext(&opts)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = tools.Run(ctx, opts.Tool)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	// Prepare dependencies
-	ctx, err := buildContext(&opts)
+	ctx, err := buildCheckContext(&opts)
 	if err != nil {
 		log.Fatal(err)
 	}

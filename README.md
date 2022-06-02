@@ -14,6 +14,11 @@ Currently kdebug supports following checks:
 * Kube pod: Check pod restart reasons.
 * OOM: Analysis out-of-memory events.
 
+## Tools
+
+Currently kdebug supports following tools:
+* Tcp Dump: Attch into a process's network namespace and dump network traffic
+
 ## How to use
 
 ### Basic
@@ -89,6 +94,20 @@ Or filter out unready nodes only:
 ```bash
 kdebug -c dns \
     --batch.kube-machines-unready
+```
+
+### Tool mode
+
+kdebug supports tool mode that is a wrapper of some useful commands. Check available tool mode suit with
+```bash
+kdebug --list
+
+#tools: [tcpdump]
+```
+
+Use tool mode with the following command:
+```bash
+kdebug -t <suit>
 ```
 
 ## Development

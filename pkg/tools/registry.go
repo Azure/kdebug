@@ -4,10 +4,12 @@ import (
 	"sort"
 
 	tcpdump "github.com/Azure/kdebug/pkg/tools/tcpdump"
+	"github.com/Azure/kdebug/pkg/tools/vmrebootdetector"
 )
 
 var allTools = map[string]Tool{
-	"tcpdump": tcpdump.New(),
+	"tcpdump":          tcpdump.New(),
+	"vmrebootdetector": vmrebootdetector.New(),
 }
 
 func ListAllToolNames() []string {

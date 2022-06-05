@@ -31,11 +31,6 @@ type Options struct {
 	Verbose        string   `short:"v" long:"verbose" description:"Log level"`
 	NoColor        bool     `long:"no-color" description:"Disable colorized output"`
 
-	Pod struct {
-		Name      string `long:"name" description:"Pod name"`
-		Namespace string `long:"namespace" description:"Namespace the Pod runs in"`
-	} `group:"pod_info" namespace:"pod" description:"Information of a Pod"`
-
 	Batch struct {
 		KubeMachines              bool     `long:"kube-machines" description:"Discover machines from Kubernetes API server"`
 		KubeMachinesUnready       bool     `long:"kube-machines-unready" description:"Discover unready machines from Kubernetes API server"`
@@ -99,11 +94,6 @@ func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 			"error": err,
 		}).Warn("Kubernetes related checkers will not work")
 	}
-
-	ctx.Pod = struct {
-		Name      string
-		Namespace string
-	}(opts.Pod)
 
 	return ctx, nil
 }

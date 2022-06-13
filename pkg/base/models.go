@@ -19,7 +19,12 @@ type CheckContext struct {
 }
 
 type ToolContext struct {
-	Tcpdump Tcpdump
+	Tcpdump          Tcpdump
+	VmRebootDetector VMRebootDetector
+}
+
+type VMRebootDetector struct {
+	CheckDays int `short:"d" long:"checkdays" description:"Days you want to look back to search for reboot events. Default is 1."`
 }
 
 type Tcpdump struct {

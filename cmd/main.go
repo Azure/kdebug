@@ -22,7 +22,7 @@ import (
 )
 
 type Options struct {
-	ListCheckers   bool     `short:"l" long:"list" description:"List all checks"`
+	ListCheckers   bool     `short:"l" long:"list" description:"List all checks and tools"`
 	Checkers       []string `short:"c" long:"check" description:"Check name. Can specify multiple times."`
 	Tool           string   `short:"t" long:"tool" description:"Use tool"`
 	Format         string   `short:"f" long:"format" description:"Output format"`
@@ -41,7 +41,8 @@ type Options struct {
 		SshUser                   string   `long:"ssh-user" description:"SSH user"`
 	} `group:"batch" namespace:"batch" description:"Batch mode"`
 
-	Tcpdump base.Tcpdump `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
+	Tcpdump        base.Tcpdump          `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
+	VMRebootDetect base.VMRebootDetector `group:"vmrebootdetector" namespace:"vmrebootdetector" description:"Tool mode: vm reboot detector"`
 }
 
 func (o *Options) IsBatchMode() bool {
@@ -101,6 +102,7 @@ func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 func buildToolContext(opts *Options) (*base.ToolContext, error) {
 	ctx := &base.ToolContext{}
 	ctx.Tcpdump = opts.Tcpdump
+	ctx.VmRebootDetector = opts.VMRebootDetect
 
 	return ctx, nil
 }

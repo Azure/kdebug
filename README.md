@@ -2,9 +2,16 @@
 
 kdebug is a command line utility that helps troubleshoot a running Kubernetes cluster and apps in it.
 
-By running a set of predefined checks, it gives diagnostics information and guides you to next steps.
+It focuses on DevOps scenarios and covers these areas:
 
-## Checks
+* OS diagnostics
+* Kubernetes components diagnostics
+* Lightweight application diagnostics
+
+## Check mode
+
+kdebug runs in check mode by default.
+By running a set of predefined checks, it gives diagnostics information and guides you to next steps.
 
 Currently kdebug supports following checks:
 
@@ -14,11 +21,6 @@ Currently kdebug supports following checks:
 * Kube Object Size: Check configmap/secret object size.
 * Kube pod: Check pod restart reasons.
 * OOM: Analysis out-of-memory events.
-
-## Tools
-
-Currently kdebug supports following tools:
-* Tcp Dump: Attch into a process's network namespace and dump network traffic
 
 ## How to use
 
@@ -40,6 +42,12 @@ List available checks:
 
 ```bash
 kdebug --list
+```
+
+See full supported arguments and help:
+
+```bash
+kdebug -h
 ```
 
 ### Kubernetes checks
@@ -97,18 +105,66 @@ kdebug -c dns \
     --batch.kube-machines-unready
 ```
 
-### Tool mode
+## Tool mode
 
-kdebug supports tool mode that is a wrapper of some useful commands. Check available tool mode suit with
+In addition to the default check mode, kdebug also supports a tool mode.
+Tool mode wraps useful commands and makes them easier to used in typical scenarios.
+
+
+Currently kdebug provides following tools:
+
+* Tcpdump: Wrap tcpdump command and provides a simpler interface for container scenarios.
+* Reboot reason: Inspect last reboot reason.
+
+You can see a full list with:
+
 ```bash
 kdebug --list
-
-#tools: [tcpdump]
 ```
 
-Use tool mode with the following command:
+Use following command to start a tool:
+
 ```bash
-kdebug -t <suit>
+kdebug -t <tool>
+```
+
+### Tcpdump
+
+Attach to network namespace of a process with pid=100 and capture all traffic:
+
+```bash
+kdebug -t tcpdump --tcpdump.pid=100
+```
+
+With source and destination specified, and TCP only:
+
+```bash
+kdebug -t tcpdump \
+    --tcpdump.pid=100 \
+    --tcpdump.source=10.0.0.1:1000 \
+    --tcpdump.destination=10.0.0.2:2000 \
+    --tcpdump.tcponly
+```
+
+`--tcpdump.host` matches either source or destination:
+
+```bash
+kdebug -t tcpdump --tcpdump.host=10.0.0.1:1000
+```
+
+### Reboot reason
+
+Check VM last reboot reason within last 1 day:
+
+```
+kdebug -t vmrebootdetector
+```
+
+Check VM last reboot reason within last 100 days:
+
+```
+kdebug -t vmrebootdetector \
+    --vmrebootdetector.checkdays=100
 ```
 
 ## Development

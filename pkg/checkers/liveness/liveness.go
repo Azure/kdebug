@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Azure/kdebug/pkg/base"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -30,11 +31,7 @@ func (c *LivenessChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, er
 	out, err := exec.Command("systemctl", "status", "kubelet").Output()
 
 	if err != nil {
-		results = append(results, &base.CheckResult{
-			Checker:     c.Name(),
-			Error:       FailedToCheckLiveness,
-			Description: err.Error(),
-		})
+		log.Debugf("systemctl status returned non-zero exit code: %+v", err)
 	}
 
 	results = append(results, parseOutput(out))

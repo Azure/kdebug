@@ -29,7 +29,7 @@ var (
 		"on",
 	}
 
-	DiskUsageRateThreshold = 95
+	DiskUsageRateThreshold = 90
 	InterestedBigFilePath  = []string{
 		"/var/log",
 	}

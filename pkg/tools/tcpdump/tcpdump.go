@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Azure/kdebug/pkg/base"
+	log "github.com/sirupsen/logrus"
 )
 
 type TcpdumpTool struct {
@@ -32,20 +33,25 @@ func (c *TcpdumpTool) Name() string {
 	return "Tcpdump"
 }
 
+func logAndExec(name string, args ...string) *exec.Cmd {
+	log.Infof("Exec %s %+v", name, args)
+	return exec.Command(name, args...)
+}
+
 func (c *TcpdumpTool) Run(ctx *base.ToolContext) error {
 	c.ParseParameters(ctx)
 	tcpdumpArgs := c.GenerateTcpdumpParamerters()
 
 	// Attch pid
 	if len(ctx.Tcpdump.Pid) > 0 {
-		_, err := exec.Command("nsenter", "-n", "-t", ctx.Tcpdump.Pid).Output()
+		_, err := logAndExec("nsenter", "-n", "-t", ctx.Tcpdump.Pid).Output()
 
 		if err != nil {
 			return err
 		}
 	}
 
-	cmd := exec.Command("tcpdump", strings.Split(tcpdumpArgs, " ")...)
+	cmd := logAndExec("tcpdump", strings.Split(tcpdumpArgs, " ")...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()

@@ -10,6 +10,7 @@ Currently kdebug supports following checks:
 
 * Disk usage: Check disk usage and identity top large files.
 * DNS: Check cluster DNS.
+* HTTP: Check HTTP connectivity to well known endpoints.
 * Kube Object Size: Check configmap/secret object size.
 * Kube pod: Check pod restart reasons.
 * OOM: Analysis out-of-memory events.

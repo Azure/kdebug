@@ -186,4 +186,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Exit code
+	for _, result := range results {
+		if !result.Ok() {
+			os.Exit(1)
+		}
+	}
 }

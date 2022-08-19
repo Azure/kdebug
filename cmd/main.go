@@ -143,6 +143,8 @@ func main() {
 	var formatter formatters.Formatter
 	if opts.Format == "json" {
 		formatter = &formatters.JsonFormatter{}
+	} else if opts.Format == "oneline" {
+		formatter = &formatters.OnelineFormatter{}
 	} else {
 		formatter = &formatters.TextFormatter{}
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -143,11 +144,15 @@ func main() {
 	processOptions(&opts)
 
 	if len(opts.Verbose) > 0 {
-		logLevel, err := logrus.ParseLevel(opts.Verbose)
-		if err != nil {
-			log.Fatal(err)
+		if opts.Verbose == "none" {
+			logrus.SetOutput(ioutil.Discard)
+		} else {
+			logLevel, err := logrus.ParseLevel(opts.Verbose)
+			if err != nil {
+				log.Fatal(err)
+			}
+			logrus.SetLevel(logLevel)
 		}
-		logrus.SetLevel(logLevel)
 	}
 
 	if !isatty.IsTerminal(os.Stdout.Fd()) || opts.NoColor {

@@ -30,6 +30,7 @@ type Options struct {
 	KubeConfigPath string   `long:"kube-config-path" description:"Path to kubeconfig file"`
 	Verbose        string   `short:"v" long:"verbose" description:"Log level"`
 	NoColor        bool     `long:"no-color" description:"Disable colorized output"`
+	Pause          bool     `long:"pause" description:"Pause until interrupted"`
 
 	Batch struct {
 		KubeMachines              bool     `long:"kube-machines" description:"Discover machines from Kubernetes API server"`
@@ -137,6 +138,11 @@ func main() {
 		fmt.Println(chks.ListAllCheckerNames())
 		fmt.Print("tools: ")
 		fmt.Println(tools.ListAllToolNames())
+		return
+	}
+
+	if opts.Pause {
+		pause()
 		return
 	}
 

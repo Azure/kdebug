@@ -21,6 +21,7 @@ Currently kdebug supports following checks:
 * Kube Object Size: Check configmap/secret object size.
 * Kube pod: Check pod restart reasons.
 * OOM: Analysis out-of-memory events.
+* System Load: Check the CPU and Memory of VM and some primary processes (etcd, kubelet...)
 
 ## How to use
 

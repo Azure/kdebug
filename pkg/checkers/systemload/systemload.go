@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	GlobalCPUTooHigh               = "The VM's CPU usage is higher then limit %f%%. It's currently %f%%."
-	GlobalMemoryTooHigh            = "The VM's Memory usage is higher then limit %f%%. It's currently %f%%."
-	ProcessCPUTooHigh              = "The CPU usage of process [%d] (%s) is higher than limit. The proportion of cpu is %f%% to whole capacity (limit is %f%%). The proportion of cpu is %f%% to one core (limit is %f%%)"
+	GlobalCPUTooHigh               = "The VM's CPU usage is higher than threshold. Currently %.1f%% (threshold is %.1f%%)."
+	GlobalMemoryTooHigh            = "The VM's Memory usage is higher than threshold. Currently %.1f%% (threshold is %.1f%%)"
+	ProcessCPUTooHigh              = "The CPU usage of process [%d] (%s) is higher than threshold. The proportion of cpu is %.1f%% to whole capacity (threshold is %.1f%%). The proportion of cpu is %.1f%% to one core (threshold is %.1f%%)"
 	GloablHighCPURecommandation    = "You may remote to the target VM and use 'top' to find out which process consumes most of CPU. Further actions may depends."
 	GloablHighMemoryRecommandation = "You may remote to the target VM and use 'top' to find out which process consumes most of Memory. Further actions may depends."
 	ProcessHighCPURecommandation   = "You may restart to process if feasible and see whether the CPU usage comes to normal. Or you can 'perf' to diagnose the root cause."
@@ -56,31 +56,23 @@ func (c *SystemLoadChecker) Name() string {
 func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
 	result := []*base.CheckResult{}
 
-	procStatusFiles, err := filepath.Glob("/proc/[0-9]*/stat")
+	// VM Memory
+	memInfo, err := linuxproc.ReadMemInfo("/proc/meminfo")
 	if err != nil {
 		return result, err
 	}
+	var memUsage = float64(100) - float64(100*memInfo.MemAvailable)/float64(memInfo.MemTotal)
+	if memUsage > VMMemoryPercentageLimit {
+		result = append(result, &base.CheckResult{
+			Checker:     c.Name(),
+			Error:       fmt.Sprintf(GlobalMemoryTooHigh, memUsage, VMMemoryPercentageLimit),
+			Description: GloablHighMemoryRecommandation,
+		})
+	}
 
-	interestedProcesses := []*InterestedProc{}
-
-	// Read status and find out interested process
-	for _, f := range procStatusFiles {
-		stat, err := linuxproc.ReadProcessStat(f)
-		if err != nil {
-			continue
-		}
-
-		var cmd = stat.Comm[1 : len(stat.Comm)-1] // name: (cmd)
-		if limit, ok := InterestedProcNames[cmd]; ok {
-			interestedProcesses = append(interestedProcesses, &InterestedProc{
-				StatFilePath:         f,
-				Name:                 cmd,
-				Pid:                  stat.Pid,
-				CPULimitAsGloabl:     limit.CPULimitAsGloabl,
-				CPULimitAsSingleCore: limit.CPULimitAsSingleCore,
-				TotalTime:            stat.Utime + stat.Stime, // Time in user space + Time in kernal space
-			})
-		}
+	interestedProcesses, err := GetInterestedProc()
+	if err != nil {
+		return result, err
 	}
 
 	// Read global status
@@ -108,7 +100,7 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 	if usage > VMCPUPercentageLimit {
 		result = append(result, &base.CheckResult{
 			Checker:     c.Name(),
-			Error:       fmt.Sprintf(GlobalCPUTooHigh, VMCPUPercentageLimit, usage),
+			Error:       fmt.Sprintf(GlobalCPUTooHigh, usage, VMCPUPercentageLimit),
 			Description: GloablHighCPURecommandation,
 		})
 	}
@@ -134,24 +126,41 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 		}
 	}
 
-	// VM Memory
-	memInfo, err := linuxproc.ReadMemInfo("/proc/meminfo")
-	if err != nil {
-		return result, err
-	}
-	var memUsage = float64(100) - float64(100*memInfo.MemAvailable)/float64(memInfo.MemTotal)
-	if memUsage > VMMemoryPercentageLimit {
-		result = append(result, &base.CheckResult{
-			Checker:     c.Name(),
-			Error:       fmt.Sprintf(GlobalMemoryTooHigh, VMMemoryPercentageLimit, memUsage),
-			Description: GloablHighMemoryRecommandation,
-		})
-	}
-
 	return result, nil
 }
 
 func GetTotalTime(stat linuxproc.CPUStat) uint64 {
 	return stat.User + stat.Nice + stat.System + stat.Idle + stat.IOWait + stat.IRQ + stat.SoftIRQ +
 		stat.Steal + stat.Guest + stat.GuestNice
+}
+
+func GetInterestedProc() ([]*InterestedProc, error) {
+	result := []*InterestedProc{}
+
+	procStatusFiles, err := filepath.Glob("/proc/[0-9]*/stat")
+	if err != nil {
+		return result, err
+	}
+
+	// Read status and find out interested process
+	for _, f := range procStatusFiles {
+		stat, err := linuxproc.ReadProcessStat(f)
+		if err != nil {
+			continue
+		}
+
+		var cmd = stat.Comm[1 : len(stat.Comm)-1] // name: (cmd)
+		if limit, ok := InterestedProcNames[cmd]; ok {
+			result = append(result, &InterestedProc{
+				StatFilePath:         f,
+				Name:                 cmd,
+				Pid:                  stat.Pid,
+				CPULimitAsGloabl:     limit.CPULimitAsGloabl,
+				CPULimitAsSingleCore: limit.CPULimitAsSingleCore,
+				TotalTime:            stat.Utime + stat.Stime, // Time in user space + Time in kernal space
+			})
+		}
+	}
+
+	return result, nil
 }

@@ -11,25 +11,31 @@ import (
 
 const (
 	GlobalCPUTooHigh             = "The VM's CPU usage is higher then limit %f. It's currently %f."
-	HighUsageRecommandation      = "Check files listed. If it's just log files or can be deleted, run bash command: `truncate -s 0 /path/to/file` to reduce disk usage. Note: `rm` will not really delete the file if it's opened by processes."
-	FailedToCheckDiskUsageWithDf = "Failed to check disk usage with 'df -h'"
+	ProcessCPUTooHigh            = "The CPU usage of process [%d] (%s) is higher than limit. The proportion of cpu is %f%% to whole capacity (limit is %f%%). The proportion of cpu is %f%% to one core (limit is %f%%)"
+	GloablHighCPURecommandation  = "You may remote to the target VM and use 'top' to find out which process consumes most of CPU."
+	ProcessHighCPURecommandation = "You may restart to process if feasible and see whether the CPU usage comes to normal. Or you can 'perf' to diagnose the root cause."
 )
 
 var (
-	GlobalCPUPercentageLimit            = float64(80)
-	GlobalMemoryPercentageLimit         = 80
-	ClkTck                      float64 = 100 // default
-	InsterestedProcNames                = map[string]bool{"etcd": true, "kubelet": true}
+	GlobalCPUPercentageLimit float64 = 80  // The percentage compare to the whole VM CPU capacity. 100 means using up all the cpu capacity
+	ClkTck                   float64 = 100 // default
+	InterestedProcNames              = map[string]ProcLimitMeasurement{
+		"etcd":    {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80},
+		"kubelet": {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80}}
 )
 
 type InterestedProc struct {
-	StatFilePath  string
-	Name          string
-	Pid           uint64
-	TotalTime     uint64
-	ProcessState  linuxproc.ProcessStat
-	Uptime        linuxproc.Uptime
-	CPUAlertLimit float64
+	StatFilePath         string  // Process stat file location. Should follow /proc/[pid]/stat
+	Name                 string  // The command of the process
+	Pid                  uint64  // Pid
+	TotalTime            uint64  // Time of the process used in cpu cycle
+	CPULimitAsGloabl     float64 // CPU limit compare to the whole VM CPU capacity
+	CPULimitAsSingleCore float64 // CPU limit compare to one core
+}
+
+type ProcLimitMeasurement struct {
+	CPULimitAsGloabl     float64 // The percentage compare to the whole VM CPU capacity. 100 means using up all the cpu capacity
+	CPULimitAsSingleCore float64 // The percentage compare to one core. 100 means using up 1 core's capacity. Maximum number can be 100 * cores
 }
 
 type SystemLoadChecker struct {
@@ -46,7 +52,7 @@ func (c *SystemLoadChecker) Name() string {
 func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
 	result := []*base.CheckResult{}
 
-	procStatusFiles, err := filepath.Glob("/proc/[0-9]+/stat")
+	procStatusFiles, err := filepath.Glob("/proc/[0-9]*/stat")
 	interestedProcesses := []*InterestedProc{}
 
 	// Read status and find out interested process
@@ -56,17 +62,19 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 			continue
 		}
 
-		if InsterestedProcNames[stat.Comm] {
+		var cmd = stat.Comm[1 : len(stat.Comm)-1] // name: (cmd)
+		if limit, ok := InterestedProcNames[cmd]; ok {
 			interestedProcesses = append(interestedProcesses, &InterestedProc{
-				StatFilePath: f,
-				Name:         stat.Comm,
-				Pid:          stat.Pid,
-				TotalTime:    stat.Utime + stat.Stime, // Time in user space + Time in kernal space
+				StatFilePath:         f,
+				Name:                 cmd,
+				Pid:                  stat.Pid,
+				CPULimitAsGloabl:     limit.CPULimitAsGloabl,
+				CPULimitAsSingleCore: limit.CPULimitAsSingleCore,
+				TotalTime:            stat.Utime + stat.Stime, // Time in user space + Time in kernal space
 			})
 		}
 	}
 
-	// https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
 	// Read global status
 	stat, err := linuxproc.ReadStat("/proc/stat")
 	if err != nil {
@@ -87,7 +95,14 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 	var deltaIdleTime = stat.CPUStatAll.Idle - previousIdleTime
 	var deltaTotalTime = GetTotalTime(stat.CPUStatAll) - previousTotalTime
 	var usage = 100 - (float64(100*(deltaIdleTime)) / float64(deltaTotalTime))
-	fmt.Print(usage)
+
+	if usage > GlobalCPUPercentageLimit {
+		result = append(result, &base.CheckResult{
+			Checker:     c.Name(),
+			Error:       fmt.Sprintf(GlobalCPUTooHigh, GlobalCPUPercentageLimit, usage),
+			Description: GloablHighCPURecommandation,
+		})
+	}
 
 	// Calculate interested proc
 	for _, proc := range interestedProcesses {
@@ -96,17 +111,18 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 			continue
 		}
 
+		// https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
 		totalTime := stat.Utime + stat.Stime
-		usage := float64(totalTime-proc.TotalTime) / float64(deltaTotalTime)
+		cpuUsageAsGlobal := 100 * float64(totalTime-proc.TotalTime) / float64(deltaTotalTime)
+		cpuUsageAsSingleCore := 100 * float64(totalTime-proc.TotalTime) / ClkTck
 
-		print(fmt.Sprintf("%s usage: %f", proc.Name, usage))
-	}
-
-	if usage > GlobalCPUPercentageLimit {
-		result = append(result, &base.CheckResult{
-			Checker: c.Name(),
-			Error:   fmt.Sprintf(GlobalCPUTooHigh, GlobalCPUPercentageLimit, usage),
-		})
+		if cpuUsageAsGlobal > proc.CPULimitAsGloabl || cpuUsageAsSingleCore > proc.CPULimitAsSingleCore {
+			result = append(result, &base.CheckResult{
+				Checker:     c.Name(),
+				Error:       fmt.Sprintf(ProcessCPUTooHigh, proc.Pid, proc.Name, cpuUsageAsGlobal, proc.CPULimitAsGloabl, cpuUsageAsSingleCore, proc.CPULimitAsSingleCore),
+				Description: ProcessHighCPURecommandation,
+			})
+		}
 	}
 
 	return result, nil

@@ -10,18 +10,22 @@ import (
 )
 
 const (
-	GlobalCPUTooHigh             = "The VM's CPU usage is higher then limit %f. It's currently %f."
-	ProcessCPUTooHigh            = "The CPU usage of process [%d] (%s) is higher than limit. The proportion of cpu is %f%% to whole capacity (limit is %f%%). The proportion of cpu is %f%% to one core (limit is %f%%)"
-	GloablHighCPURecommandation  = "You may remote to the target VM and use 'top' to find out which process consumes most of CPU."
-	ProcessHighCPURecommandation = "You may restart to process if feasible and see whether the CPU usage comes to normal. Or you can 'perf' to diagnose the root cause."
+	GlobalCPUTooHigh               = "The VM's CPU usage is higher then limit %f%%. It's currently %f%%."
+	GlobalMemoryTooHigh            = "The VM's Memory usage is higher then limit %f%%. It's currently %f%%."
+	ProcessCPUTooHigh              = "The CPU usage of process [%d] (%s) is higher than limit. The proportion of cpu is %f%% to whole capacity (limit is %f%%). The proportion of cpu is %f%% to one core (limit is %f%%)"
+	GloablHighCPURecommandation    = "You may remote to the target VM and use 'top' to find out which process consumes most of CPU. Further actions may depends."
+	GloablHighMemoryRecommandation = "You may remote to the target VM and use 'top' to find out which process consumes most of Memory. Further actions may depends."
+	ProcessHighCPURecommandation   = "You may restart to process if feasible and see whether the CPU usage comes to normal. Or you can 'perf' to diagnose the root cause."
 )
 
 var (
-	GlobalCPUPercentageLimit float64 = 80  // The percentage compare to the whole VM CPU capacity. 100 means using up all the cpu capacity
-	ClkTck                   float64 = 100 // default
-	InterestedProcNames              = map[string]ProcLimitMeasurement{
-		"etcd":    {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80},
-		"kubelet": {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80}}
+	VMCPUPercentageLimit    float64 = 80  // The percentage compare to the whole VM CPU capacity. 100 means using up all the cpu capacity
+	VMMemoryPercentageLimit float64 = 90  // The percentage compare to the VM Total Memory. 100 means using up all the memory capacity
+	ClkTck                  float64 = 100 // default value of cycles per seconds
+	InterestedProcNames             = map[string]ProcLimitMeasurement{
+		"etcd":           {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80},
+		"kubelet":        {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80},
+		"kube-apiserver": {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80}}
 )
 
 type InterestedProc struct {
@@ -53,6 +57,10 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 	result := []*base.CheckResult{}
 
 	procStatusFiles, err := filepath.Glob("/proc/[0-9]*/stat")
+	if err != nil {
+		return result, err
+	}
+
 	interestedProcesses := []*InterestedProc{}
 
 	// Read status and find out interested process
@@ -96,15 +104,16 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 	var deltaTotalTime = GetTotalTime(stat.CPUStatAll) - previousTotalTime
 	var usage = 100 - (float64(100*(deltaIdleTime)) / float64(deltaTotalTime))
 
-	if usage > GlobalCPUPercentageLimit {
+	// VM CPU
+	if usage > VMCPUPercentageLimit {
 		result = append(result, &base.CheckResult{
 			Checker:     c.Name(),
-			Error:       fmt.Sprintf(GlobalCPUTooHigh, GlobalCPUPercentageLimit, usage),
+			Error:       fmt.Sprintf(GlobalCPUTooHigh, VMCPUPercentageLimit, usage),
 			Description: GloablHighCPURecommandation,
 		})
 	}
 
-	// Calculate interested proc
+	// Interested proc cpu
 	for _, proc := range interestedProcesses {
 		stat, err := linuxproc.ReadProcessStat(proc.StatFilePath)
 		if err != nil {
@@ -123,6 +132,20 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 				Description: ProcessHighCPURecommandation,
 			})
 		}
+	}
+
+	// VM Memory
+	memInfo, err := linuxproc.ReadMemInfo("/proc/meminfo")
+	if err != nil {
+		return result, err
+	}
+	var memUsage = float64(100) - float64(100*memInfo.MemAvailable)/float64(memInfo.MemTotal)
+	if memUsage > VMMemoryPercentageLimit {
+		result = append(result, &base.CheckResult{
+			Checker:     c.Name(),
+			Error:       fmt.Sprintf(GlobalMemoryTooHigh, VMMemoryPercentageLimit, memUsage),
+			Description: GloablHighMemoryRecommandation,
+		})
 	}
 
 	return result, nil

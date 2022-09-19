@@ -21,6 +21,7 @@ type CheckContext struct {
 type ToolContext struct {
 	Tcpdump          Tcpdump
 	VmRebootDetector VMRebootDetector
+	UpgradeInspector UpgradeInspector
 }
 
 type VMRebootDetector struct {
@@ -33,6 +34,11 @@ type Tcpdump struct {
 	Host        string `long:"host" description:"The host(either src or dst) of the connection. Format: <ip>:<port>. Watch if not assigned."`
 	Pid         string `short:"p" long:"pid" description:"Attach into a specific pid's network namespace. Use current namespace if not assigned"`
 	TcpOnly     bool   `long:"tcponly" description:"Only watch tcp connections"`
+}
+
+type UpgradeInspector struct {
+	CheckDays   int `long:"checkdays" description:"Days you want to look back to search for package upgrade history. Default is 7."`
+	RecordLimit int `long:"recordlimit" description:"Number of records you want to inspect for package upgrade history. Default is 50."`
 }
 
 type CheckResult struct {

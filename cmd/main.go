@@ -44,6 +44,7 @@ type Options struct {
 
 	Tcpdump        base.Tcpdump          `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
 	VMRebootDetect base.VMRebootDetector `group:"vmrebootdetector" namespace:"vmrebootdetector" description:"Tool mode: vm reboot detector"`
+	UpgradeInspect base.UpgradeInspector `group:"upgradeinspector" namespace:"upgradeinspector" description:"Tool mode: pkg upgrade inspector"`
 }
 
 func (o *Options) IsBatchMode() bool {
@@ -104,6 +105,7 @@ func buildToolContext(opts *Options) (*base.ToolContext, error) {
 	ctx := &base.ToolContext{}
 	ctx.Tcpdump = opts.Tcpdump
 	ctx.VmRebootDetector = opts.VMRebootDetect
+	ctx.UpgradeInspector = opts.UpgradeInspect
 
 	return ctx, nil
 }

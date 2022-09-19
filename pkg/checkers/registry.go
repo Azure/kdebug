@@ -3,6 +3,7 @@ package checker
 import (
 	"sort"
 
+	"github.com/Azure/kdebug/pkg/checkers/diskreadonly"
 	"github.com/Azure/kdebug/pkg/checkers/diskusage"
 	"github.com/Azure/kdebug/pkg/checkers/dns"
 	"github.com/Azure/kdebug/pkg/checkers/dummy"
@@ -20,6 +21,7 @@ var allCheckers = map[string]Checker{
 	"oom":            oom.New(),
 	"kubeobjectsize": kubeobjectsize.New(),
 	"diskusage":      diskusage.New(),
+	"diskreadonly":   diskreadonly.New(),
 	"kubepod":        pod.New(),
 	"liveness":       liveness.New(),
 	"http":           http.New(),

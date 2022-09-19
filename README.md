@@ -16,6 +16,7 @@ By running a set of predefined checks, it gives diagnostics information and guid
 Currently kdebug supports following checks:
 
 * Disk usage: Check disk usage and identity top large files.
+* Disk read-only: Check if the user home directory is read-only.
 * DNS: Check cluster DNS.
 * HTTP: Check HTTP connectivity to well known endpoints.
 * Kube Object Size: Check configmap/secret object size.

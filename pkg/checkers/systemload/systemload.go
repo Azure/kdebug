@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Azure/kdebug/pkg/base"
+	"github.com/Azure/kdebug/pkg/env"
 	linuxproc "github.com/c9s/goprocinfo/linux"
 )
 
@@ -22,6 +23,7 @@ var (
 	VMCPUPercentageLimit    float64 = 80  // The percentage compare to the whole VM CPU capacity. 100 means using up all the cpu capacity
 	VMMemoryPercentageLimit float64 = 90  // The percentage compare to the VM Total Memory. 100 means using up all the memory capacity
 	ClkTck                  float64 = 100 // default value of cycles per seconds
+	CPUSpan                 float64 = 1   // The timespan of CPU load in seconds
 	InterestedProcNames             = map[string]ProcLimitMeasurement{
 		"etcd":           {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80},
 		"kubelet":        {CPULimitAsGloabl: 50, CPULimitAsSingleCore: 80},
@@ -56,12 +58,20 @@ func (c *SystemLoadChecker) Name() string {
 func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
 	result := []*base.CheckResult{}
 
+	if !assertLinux(ctx.Environment) {
+		result = append(result, &base.CheckResult{
+			Checker:     c.Name(),
+			Description: fmt.Sprint("Skip systemload check in non-linux os"),
+		})
+		return result, nil
+	}
+
 	// VM Memory
 	memInfo, err := linuxproc.ReadMemInfo("/proc/meminfo")
 	if err != nil {
 		return result, err
 	}
-	var memUsage = float64(100) - float64(100*memInfo.MemAvailable)/float64(memInfo.MemTotal)
+	var memUsage = getMemPercentage(memInfo.MemAvailable, memInfo.MemTotal)
 	if memUsage > VMMemoryPercentageLimit {
 		result = append(result, &base.CheckResult{
 			Checker:     c.Name(),
@@ -70,7 +80,7 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 		})
 	}
 
-	interestedProcesses, err := GetInterestedProc()
+	interestedProcesses, err := getInterestedProc()
 	if err != nil {
 		return result, err
 	}
@@ -82,19 +92,20 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 	}
 
 	// How to calculate global cpu usage: https://rosettacode.org/wiki/Linux_CPU_utilization
-	var previousIdleTime = stat.CPUStatAll.Idle
-	var previousTotalTime = GetTotalTime(stat.CPUStatAll)
+	previousIdleTime, previousTotalTime := getSystemCPUTime(stat.CPUStatAll)
 
-	time.Sleep(time.Second)
+	// Sleep a time span and check cpu time again to get average CPU load
+	time.Sleep(time.Duration(CPUSpan * float64(time.Second)))
 
 	stat, err = linuxproc.ReadStat("/proc/stat")
 	if err != nil {
 		return result, err
 	}
 
-	var deltaIdleTime = stat.CPUStatAll.Idle - previousIdleTime
-	var deltaTotalTime = GetTotalTime(stat.CPUStatAll) - previousTotalTime
-	var usage = 100 - (float64(100*(deltaIdleTime)) / float64(deltaTotalTime))
+	idleTime, totalTime := getSystemCPUTime(stat.CPUStatAll)
+	var deltaSystemIdleTime = idleTime - previousIdleTime
+	var deltaSystemTotalTime = totalTime - previousTotalTime
+	var usage = getSystemCPUPercentage(deltaSystemIdleTime, deltaSystemTotalTime)
 
 	// VM CPU
 	if usage > VMCPUPercentageLimit {
@@ -114,8 +125,8 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 
 		// https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
 		totalTime := stat.Utime + stat.Stime
-		cpuUsageAsGlobal := 100 * float64(totalTime-proc.TotalTime) / float64(deltaTotalTime)
-		cpuUsageAsSingleCore := 100 * float64(totalTime-proc.TotalTime) / ClkTck
+		cpuUsageAsGlobal := getProcessCPUPercentageAsGlobal(totalTime-proc.TotalTime, deltaSystemTotalTime)
+		cpuUsageAsSingleCore := getProcessCPUPercentageAsSingleCore(totalTime-proc.TotalTime, CPUSpan)
 
 		if cpuUsageAsGlobal > proc.CPULimitAsGloabl || cpuUsageAsSingleCore > proc.CPULimitAsSingleCore {
 			result = append(result, &base.CheckResult{
@@ -129,12 +140,12 @@ func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, 
 	return result, nil
 }
 
-func GetTotalTime(stat linuxproc.CPUStat) uint64 {
+func getTotalTime(stat linuxproc.CPUStat) uint64 {
 	return stat.User + stat.Nice + stat.System + stat.Idle + stat.IOWait + stat.IRQ + stat.SoftIRQ +
 		stat.Steal + stat.Guest + stat.GuestNice
 }
 
-func GetInterestedProc() ([]*InterestedProc, error) {
+func getInterestedProc() ([]*InterestedProc, error) {
 	result := []*InterestedProc{}
 
 	procStatusFiles, err := filepath.Glob("/proc/[0-9]*/stat")
@@ -163,4 +174,28 @@ func GetInterestedProc() ([]*InterestedProc, error) {
 	}
 
 	return result, nil
+}
+
+func assertLinux(environment env.Environment) bool {
+	return environment.HasFlag("ubuntu")
+}
+
+func getSystemCPUTime(stat linuxproc.CPUStat) (idleTime uint64, totalTime uint64) {
+	return stat.Idle, getTotalTime(stat)
+}
+
+func getMemPercentage(memAvailable uint64, memTotal uint64) float64 {
+	return 100 - (float64(100*memAvailable) / float64(memTotal))
+}
+
+func getSystemCPUPercentage(deltaSystemIdleTime uint64, deltaSystemTime uint64) float64 {
+	return 100 - (float64(100*(deltaSystemIdleTime)) / float64(deltaSystemTime))
+}
+
+func getProcessCPUPercentageAsGlobal(deltaProcessCPUTime uint64, deltaSystemCPUTime uint64) float64 {
+	return 100 * float64(deltaProcessCPUTime) / float64(deltaSystemCPUTime)
+}
+
+func getProcessCPUPercentageAsSingleCore(deltaProcessCPUTime uint64, deltaRealTimeInSeconds float64) float64 {
+	return 100 * float64(deltaProcessCPUTime) / deltaRealTimeInSeconds / ClkTck // deltaCPUTime / ClrTck = deltaProcessCPUTime in seconds
 }

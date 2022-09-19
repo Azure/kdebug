@@ -32,7 +32,7 @@ func (f *TextFormatter) WriteResults(w io.Writer, results []*base.CheckResult) e
 		return nil
 	}
 
-	fmt.Fprintf(w, "%v checks passed. %v failed.\n",
+	fmt.Fprintf(w, "%v checks checked. %v failed.\n",
 		color.GreenString("%d", len(results)),
 		color.RedString("%d", len(failures)))
 	fmt.Fprintf(w, "------------------------------\n")

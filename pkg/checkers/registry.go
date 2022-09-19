@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"github.com/Azure/kdebug/pkg/checkers/tcpping"
 	"sort"
 
 	"github.com/Azure/kdebug/pkg/checkers/diskusage"
@@ -22,6 +23,7 @@ var allCheckers = map[string]Checker{
 	"kubepod":        pod.New(),
 	"liveness":       liveness.New(),
 	"http":           http.New(),
+	"tcp":            tcpping.New(),
 }
 
 func ListAllCheckerNames() []string {

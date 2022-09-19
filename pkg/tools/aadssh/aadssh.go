@@ -35,6 +35,11 @@ func (c *AadSsh) Name() string {
 }
 
 func (c *AadSsh) Run(ctx *base.ToolContext) error {
+	if ctx.AadSsh.Cloud == "" {
+		// Default to public cloud
+		ctx.AadSsh.Cloud = "azurecloud"
+	}
+
 	// Ensure key dir
 	sshDir, err := ensureSSHKeyDir(SSHDirName)
 	if err != nil {
@@ -68,7 +73,7 @@ func (c *AadSsh) Run(ctx *base.ToolContext) error {
 		log.Info("Acquire a new SSH certificate from AAD")
 
 		// Acquire a certificate from AAD
-		sshCert, err = acquireCertificate(ctx.AadSsh.UseAzureCLI, sshPubKey)
+		sshCert, err = acquireCertificate(ctx.AadSsh.Cloud, ctx.AadSsh.UseAzureCLI, sshPubKey)
 		if err != nil {
 			return fmt.Errorf("Fail to acquire SSH certificate from AAD: %+v", err)
 		}

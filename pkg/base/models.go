@@ -38,7 +38,8 @@ type Tcpdump struct {
 }
 
 type AadSsh struct {
-	UseAzureCLI bool `long:"use-azure-cli" description:"Use Azure CLI credentials"`
+	Cloud       string `long:"cloud" description:"Azure cloud name. Support values are: azurecloud, azurechinacloud, azureusgovernment"`
+	UseAzureCLI bool   `long:"use-azure-cli" description:"Use Azure CLI credentials"`
 }
 
 type CheckResult struct {

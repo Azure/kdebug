@@ -19,9 +19,11 @@ type CheckContext struct {
 }
 
 type ToolContext struct {
+	Args             []string
 	Tcpdump          Tcpdump
 	VmRebootDetector VMRebootDetector
 	UpgradeInspector UpgradeInspector
+	AadSsh           AadSsh
 }
 
 type VMRebootDetector struct {
@@ -39,6 +41,10 @@ type Tcpdump struct {
 type UpgradeInspector struct {
 	CheckDays   int `long:"checkdays" description:"Days you want to look back to search for package upgrade history. Default is 7."`
 	RecordLimit int `long:"recordlimit" description:"Number of records you want to inspect for package upgrade history. Default is 50."`
+}
+
+type AadSsh struct {
+	UseAzureCLI bool `long:"use-azure-cli" description:"Use Azure CLI credentials"`
 }
 
 type CheckResult struct {

@@ -45,6 +45,9 @@ type Options struct {
 	Tcpdump        base.Tcpdump          `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
 	VMRebootDetect base.VMRebootDetector `group:"vmrebootdetector" namespace:"vmrebootdetector" description:"Tool mode: vm reboot detector"`
 	UpgradeInspect base.UpgradeInspector `group:"upgradeinspector" namespace:"upgradeinspector" description:"Tool mode: pkg upgrade inspector"`
+	AadSsh         base.AadSsh           `group:"aadssh" namespace:"aadssh" description:"Tool mode: AAD SSH"`
+
+	RemainingArgs []string
 }
 
 func (o *Options) IsBatchMode() bool {
@@ -102,10 +105,13 @@ func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 }
 
 func buildToolContext(opts *Options) (*base.ToolContext, error) {
-	ctx := &base.ToolContext{}
+	ctx := &base.ToolContext{
+		Args: opts.RemainingArgs,
+	}
 	ctx.Tcpdump = opts.Tcpdump
 	ctx.VmRebootDetector = opts.VMRebootDetect
 	ctx.UpgradeInspector = opts.UpgradeInspect
+	ctx.AadSsh = opts.AadSsh
 
 	return ctx, nil
 }
@@ -113,13 +119,14 @@ func buildToolContext(opts *Options) (*base.ToolContext, error) {
 func main() {
 	// Process options
 	var opts Options
-	_, err := flags.Parse(&opts)
+	remainingArgs, err := flags.Parse(&opts)
 	if err != nil {
 		if !flags.WroteHelp(err) {
 			log.Fatal(err)
 		}
 		return
 	}
+	opts.RemainingArgs = remainingArgs
 
 	processOptions(&opts)
 

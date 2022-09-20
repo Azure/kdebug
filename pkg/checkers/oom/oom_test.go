@@ -1,12 +1,12 @@
 package oom
 
 import (
-	"fmt"
-	"github.com/Azure/kdebug/pkg/base"
-	"github.com/Azure/kdebug/pkg/env"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/Azure/kdebug/pkg/base"
+	"github.com/Azure/kdebug/pkg/env"
 )
 
 var testStrings = []string{
@@ -16,11 +16,7 @@ var testStrings = []string{
 
 func TestCheckOOMLogWhenOOM(t *testing.T) {
 	environment := &env.StaticEnvironment{
-		Flags: []string{"ubuntu"},
-	}
-	if !envCheck(env.GetEnvironment()) {
-		fmt.Println("skip oom test")
-		return
+		Flags: []string{"linux"},
 	}
 	for _, testString := range testStrings {
 

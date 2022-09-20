@@ -13,5 +13,5 @@ kubectl deploy -f ./node-problem-detector/node-problem-detector.yaml
 
 ## What can npd-kdebug show you
 
-In kubernetes dashboard, you can click `Cluster` > `Nodes` in the side bar, and then select a node. If you see information like the following picture, it means that npd-kdebug is working on your cluster. 
-![image](../../resource/npd/npd-dashboard.png)
+In kubernetes dashboard, you can click `Daemon Sets` in the side bar. If you see information like the following picture, it means that npd-kdebug is working on your cluster. 
+![image](../../resource/npd/npd-dashboard-daemonsets.png)

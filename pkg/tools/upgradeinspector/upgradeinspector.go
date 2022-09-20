@@ -14,6 +14,8 @@ const recordLimit = 50
 
 const logPath = "/var/log/dpkg.log"
 
+const suggestion = "You can check '/var/log/dpkg.log' and '/var/log/apt/history.log' for further detail."
+
 var columns = []string{
 	"Timestamp",
 	"Package",
@@ -80,6 +82,7 @@ func (t *UpgradeInspectTool) parseResult(result string) string {
 	if t.recordLimit < logNum {
 		sb.WriteString(color.YellowString("\n%v package(s) omitted\n", logNum-t.recordLimit))
 	}
+	sb.WriteString(color.YellowString("\n%v\n", suggestion))
 	return sb.String()
 }
 

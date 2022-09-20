@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Azure/kdebug/pkg/base"
-	"github.com/Azure/kdebug/pkg/env"
 	linuxproc "github.com/c9s/goprocinfo/linux"
 )
 
@@ -58,11 +57,7 @@ func (c *SystemLoadChecker) Name() string {
 func (c *SystemLoadChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
 	result := []*base.CheckResult{}
 
-	if !assertLinux(ctx.Environment) {
-		result = append(result, &base.CheckResult{
-			Checker:     c.Name(),
-			Description: fmt.Sprint("Skip systemload check in non-linux os"),
-		})
+	if !ctx.Environment.HasFlag("linux") {
 		return result, nil
 	}
 
@@ -174,10 +169,6 @@ func getInterestedProc() ([]*InterestedProc, error) {
 	}
 
 	return result, nil
-}
-
-func assertLinux(environment env.Environment) bool {
-	return environment.HasFlag("ubuntu")
 }
 
 func getSystemCPUTime(stat linuxproc.CPUStat) (idleTime uint64, totalTime uint64) {

@@ -8,18 +8,30 @@ import (
 
 type Tool interface {
 	Name() string
+	ParseArgs(*base.ToolContext, []string) error
 	Run(*base.ToolContext) error
 }
 
-func Run(ctx *base.ToolContext, suite string) error {
-	if tool, ok := allTools[suite]; ok {
-		err := tool.Run(ctx)
-		if err != nil {
-			return err
-		}
+func getTool(name string) (Tool, error) {
+	if tool, ok := allTools[name]; ok {
+		return tool, nil
 	} else {
-		return errors.New("Unknown tool: " + suite)
+		return nil, errors.New("Unknown tool: " + name)
 	}
+}
 
-	return nil
+func ParseArgs(ctx *base.ToolContext, name string, args []string) error {
+	tool, err := getTool(name)
+	if err != nil {
+		return err
+	}
+	return tool.ParseArgs(ctx, args)
+}
+
+func Run(ctx *base.ToolContext, name string) error {
+	tool, err := getTool(name)
+	if err != nil {
+		return err
+	}
+	return tool.Run(ctx)
 }

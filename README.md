@@ -21,6 +21,7 @@ Currently kdebug supports following checks:
 * Kube Object Size: Check configmap/secret object size.
 * Kube pod: Check pod restart reasons.
 * OOM: Analysis out-of-memory events.
+* System Load: Check the CPU and Memory of VM and some primary processes (etcd, kubelet...)
 
 ## How to use
 
@@ -115,6 +116,7 @@ Currently kdebug provides following tools:
 
 * Tcpdump: Wrap tcpdump command and provides a simpler interface for container scenarios.
 * Reboot reason: Inspect last reboot reason.
+* AAD SSH: SSH via AAD. This is a handy replacement for the original Azure CLI based implementation.
 
 You can see a full list with:
 
@@ -165,6 +167,27 @@ Check VM last reboot reason within last 100 days:
 ```
 kdebug -t vmrebootdetector \
     --vmrebootdetector.checkdays=100
+```
+
+### AAD SSH
+
+SSH via AAD. See [Azure Linux VMs and Azure AD](https://learn.microsoft.com/en-us/azure/active-directory/devices/howto-vm-sign-in-azure-ad-linux).
+
+This is a handy replacement for the original Azure CLI based implementation.
+
+Login via interactive flow:
+
+```bash
+kdebug -t aadssh <user>@<tenant>@<hostname-or-ip>
+```
+
+A browser will pop up for credentials.
+
+Login via Azure CLI credentials:
+
+```bash
+az login
+kdebug -t aadssh --aadssh.use-azure-cli <user>@<tenant>@<hostname-or-ip>
 ```
 
 ## Development

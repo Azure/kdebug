@@ -15,3 +15,6 @@ kubectl deploy -f ./node-problem-detector/node-problem-detector.yaml
 
 In kubernetes dashboard, you can click `Daemon Sets` in the side bar. If you see information like the following picture, it means that npd-kdebug is working on your cluster. 
 ![image](../../resource/npd/npd-dashboard-daemonsets.png)
+
+Click `Cluster` > `Nodes`, and select a node. In the 'Conditions' tag, you can see a 'DNSProblem' type. It is a type of problems that detected by kdebug, and reported to node-problem-detector, as the node-problem-detector finally shows the `Status` and `Messages`. If `Status=False`, it means there is no DNS problem. If `Status=True`, it means npd-kdebug detected some DNS problems, and error messages show in `Messages`.
+![image](../../resource/npd/npd-dashboard.png)

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Azure/kdebug/pkg/base"
+	"github.com/fatih/color"
 )
 
 const checkDays = 7
@@ -13,13 +14,20 @@ const recordLimit = 50
 
 const logPath = "/var/log/dpkg.log"
 
+var columns = []string{
+	"Timestamp",
+	"Package",
+	"OldVer",
+	"NewVer",
+}
+
 type UpgradeInspectTool struct {
 	checkDays   int
 	recordLimit int
 }
 
 func (t *UpgradeInspectTool) Name() string {
-	return "vmrebootDetector"
+	return "upgradeinspector"
 }
 
 func New() *UpgradeInspectTool {
@@ -55,7 +63,24 @@ func (t *UpgradeInspectTool) exec() error {
 }
 
 func (t *UpgradeInspectTool) parseResult(result string) string {
-	return result
+	sb := strings.Builder{}
+	logs := strings.Split(result, "\n")
+	logNum := len(logs) - 1
+
+	if logNum == 0 {
+		sb.WriteString(color.GreenString("\nNo package upgrade log found\n"))
+	} else {
+		sb.WriteString(fmt.Sprintf("\n%-19s\t%-30s\t%-20s\t%-20s\n\n", columns[0], columns[1], columns[2], columns[3]))
+	}
+
+	for i := 0; i < logNum && i < t.recordLimit; i++ {
+		strs := strings.Split(logs[i], " ")
+		sb.WriteString(fmt.Sprintf("%v-%v\t%-30s\t%-20s\t%-20s\n", strs[0], strs[1], strs[3], strs[4], strs[5]))
+	}
+	if t.recordLimit < logNum {
+		sb.WriteString(color.YellowString("\n%v package(s) omitted\n", logNum-t.recordLimit))
+	}
+	return sb.String()
 }
 
 func (t *UpgradeInspectTool) getAwkCmd() string {
@@ -63,7 +88,7 @@ func (t *UpgradeInspectTool) getAwkCmd() string {
 		"awk",
 		"-v",
 		fmt.Sprintf("tstamp=\"$(date -d \"-%v days\" +%%s)\"", t.checkDays),
-		`'/install/ || /upgrade/ {dconv=gensub("-"," ","g",$1);tconv=gensub(":"," ","g",$2);dstamp=mktime(dconv" "tconv);if (dstamp >= tstamp ) { print } }'`,
+		`'/upgrade/ {dconv=gensub("-"," ","g",$1);tconv=gensub(":"," ","g",$2);dstamp=mktime(dconv" "tconv);if (dstamp >= tstamp) { print } }'`,
 		logPath,
 	}
 	return strings.Join(awkCmd, " ")

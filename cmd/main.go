@@ -31,6 +31,7 @@ type Options struct {
 	Verbose        string   `short:"v" long:"verbose" description:"Log level"`
 	NoColor        bool     `long:"no-color" description:"Disable colorized output"`
 	Pause          bool     `long:"pause" description:"Pause until interrupted"`
+	Help           bool     `short:"h" long:"help" description:"Show help message"`
 
 	Batch struct {
 		KubeMachines              bool     `long:"kube-machines" description:"Discover machines from Kubernetes API server"`
@@ -40,11 +41,7 @@ type Options struct {
 		MachinesFile              string   `long:"machines-file" description:"Path to a file that contains machine names list. Can use - to read from stdin."`
 		Concurrency               int      `long:"concurrency" default:"4" description:"Batch concurrency"`
 		SshUser                   string   `long:"ssh-user" description:"SSH user"`
-	} `group:"batch" namespace:"batch" description:"Batch mode"`
-
-	Tcpdump        base.Tcpdump          `group:"tcpdump" namespace:"tcpdump" description:"Tool mode: tcpdump"`
-	VMRebootDetect base.VMRebootDetector `group:"vmrebootdetector" namespace:"vmrebootdetector" description:"Tool mode: vm reboot detector"`
-	AadSsh         base.AadSsh           `group:"aadssh" namespace:"aadssh" description:"Tool mode: AAD SSH"`
+	} `group:"Batch Options" namespace:"batch" description:"Batch mode"`
 
 	RemainingArgs []string
 }
@@ -104,24 +101,24 @@ func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 }
 
 func buildToolContext(opts *Options) (*base.ToolContext, error) {
+	// Add back help arg so tool can see it
+	if opts.Help {
+		opts.RemainingArgs = append(opts.RemainingArgs, "-h")
+	}
+	log.WithFields(log.Fields{"args": opts.RemainingArgs}).Debug("Tool context")
 	ctx := &base.ToolContext{
 		Args: opts.RemainingArgs,
 	}
-	ctx.Tcpdump = opts.Tcpdump
-	ctx.VmRebootDetector = opts.VMRebootDetect
-	ctx.AadSsh = opts.AadSsh
-
 	return ctx, nil
 }
 
 func main() {
 	// Process options
 	var opts Options
-	remainingArgs, err := flags.Parse(&opts)
+	flagsParser := flags.NewParser(&opts, flags.PrintErrors|flags.PassDoubleDash|flags.IgnoreUnknown)
+	remainingArgs, err := flagsParser.Parse()
 	if err != nil {
-		if !flags.WroteHelp(err) {
-			log.Fatal(err)
-		}
+		log.Fatal(err)
 		return
 	}
 	opts.RemainingArgs = remainingArgs
@@ -169,10 +166,23 @@ func main() {
 			log.Fatal(err)
 		}
 
+		err = tools.ParseArgs(ctx, opts.Tool, opts.RemainingArgs)
+		if err != nil {
+			if !flags.WroteHelp(err) {
+				log.Fatal(err)
+			}
+			return
+		}
+
 		err = tools.Run(ctx, opts.Tool)
 		if err != nil {
 			log.Fatal(err)
 		}
+		return
+	}
+
+	if opts.Help {
+		flagsParser.WriteHelp(os.Stdout)
 		return
 	}
 

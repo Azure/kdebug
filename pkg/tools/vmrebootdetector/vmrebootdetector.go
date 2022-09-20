@@ -7,8 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/kdebug/pkg/base"
 	"github.com/fatih/color"
+	flags "github.com/jessevdk/go-flags"
+
+	"github.com/Azure/kdebug/pkg/base"
 )
 
 var helpLink = []string{
@@ -24,12 +26,27 @@ type Tool struct {
 	rebootCheckTImeInDay int
 }
 
+type Config struct {
+	CheckDays int `short:"d" long:"checkdays" description:"Days you want to look back to search for reboot events. Default is 1."`
+}
+
 func (t *Tool) Name() string {
 	return "vmrebootDetector"
 }
 
 func New() *Tool {
 	return &Tool{}
+}
+
+func (t *Tool) ParseArgs(ctx *base.ToolContext, args []string) error {
+	var config Config
+	remaningArgs, err := flags.ParseArgs(&config, args)
+	if err != nil {
+		return err
+	}
+	ctx.Config = &config
+	ctx.Args = remaningArgs
+	return nil
 }
 
 // Run todo: support batch mode
@@ -39,10 +56,11 @@ func (t *Tool) Run(ctx *base.ToolContext) error {
 }
 
 func (t *Tool) parseArgument(ctx *base.ToolContext) {
-	if ctx.VmRebootDetector.CheckDays == 0 {
+	config := ctx.Config.(*Config)
+	if config.CheckDays == 0 {
 		t.rebootCheckTImeInDay = rebootCheckTimeInDay
 	} else {
-		t.rebootCheckTImeInDay = ctx.VmRebootDetector.CheckDays
+		t.rebootCheckTImeInDay = config.CheckDays
 	}
 }
 

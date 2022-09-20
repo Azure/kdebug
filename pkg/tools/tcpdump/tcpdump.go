@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"strings"
 
+	flags "github.com/jessevdk/go-flags"
+
 	"github.com/Azure/kdebug/pkg/base"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,6 +27,14 @@ const (
 	DefaultTcpdumpArguments = "-nvvv"
 )
 
+type Config struct {
+	Source      string `long:"source" description:"The source of the connection. Format: <ip>:<port>. Watch all sources if not assigned."`
+	Destination string `long:"destination" description:"The destination of the connection. Format: <ip>:<port>. Watch all destination if not assigned."`
+	Host        string `long:"host" description:"The host(either src or dst) of the connection. Format: <ip>:<port>. Watch if not assigned."`
+	Pid         string `short:"p" long:"pid" description:"Attach into a specific pid's network namespace. Use current namespace if not assigned"`
+	TcpOnly     bool   `long:"tcponly" description:"Only watch tcp connections"`
+}
+
 func New() *TcpdumpTool {
 	return &TcpdumpTool{}
 }
@@ -38,13 +48,25 @@ func logAndExec(name string, args ...string) *exec.Cmd {
 	return exec.Command(name, args...)
 }
 
+func (c *TcpdumpTool) ParseArgs(ctx *base.ToolContext, args []string) error {
+	var config Config
+	remainingArgs, err := flags.ParseArgs(&config, args)
+	if err != nil {
+		return err
+	}
+	ctx.Config = &config
+	ctx.Args = remainingArgs
+	return nil
+}
+
 func (c *TcpdumpTool) Run(ctx *base.ToolContext) error {
-	c.ParseParameters(ctx)
+	config := ctx.Config.(*Config)
+	c.ParseParameters(config)
 	tcpdumpArgs := c.GenerateTcpdumpParamerters()
 
 	// Attch pid
-	if len(ctx.Tcpdump.Pid) > 0 {
-		_, err := logAndExec("nsenter", "-n", "-t", ctx.Tcpdump.Pid).Output()
+	if len(config.Pid) > 0 {
+		_, err := logAndExec("nsenter", "-n", "-t", config.Pid).Output()
 
 		if err != nil {
 			return err
@@ -58,12 +80,12 @@ func (c *TcpdumpTool) Run(ctx *base.ToolContext) error {
 	return err
 }
 
-func (c *TcpdumpTool) ParseParameters(ctx *base.ToolContext) {
-	c.srcIP, c.srcPort = ParseIPAndPort(ctx.Tcpdump.Source)
-	c.dstIP, c.dstPort = ParseIPAndPort(ctx.Tcpdump.Destination)
-	c.hostIP, c.hostPort = ParseIPAndPort(ctx.Tcpdump.Host)
-	c.pid = ctx.Tcpdump.Pid
-	c.tcpOnly = ctx.Tcpdump.TcpOnly
+func (c *TcpdumpTool) ParseParameters(config *Config) {
+	c.srcIP, c.srcPort = ParseIPAndPort(config.Source)
+	c.dstIP, c.dstPort = ParseIPAndPort(config.Destination)
+	c.hostIP, c.hostPort = ParseIPAndPort(config.Host)
+	c.pid = config.Pid
+	c.tcpOnly = config.TcpOnly
 }
 
 func (c *TcpdumpTool) GenerateTcpdumpParamerters() string {

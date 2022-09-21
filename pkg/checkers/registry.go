@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/kdebug/pkg/checkers/liveness"
 	"github.com/Azure/kdebug/pkg/checkers/oom"
 	"github.com/Azure/kdebug/pkg/checkers/systemload"
+	"github.com/Azure/kdebug/pkg/checkers/tcpping"
 )
 
 var allCheckers = map[string]Checker{
@@ -23,6 +24,7 @@ var allCheckers = map[string]Checker{
 	"kubepod":        pod.New(),
 	"liveness":       liveness.New(),
 	"http":           http.New(),
+	"tcp":            tcpping.New(),
 	"systemload":     systemload.New(),
 }
 

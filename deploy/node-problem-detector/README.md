@@ -14,7 +14,7 @@ We call the integration of node-problem-detector(npd) and kdebug as **npd-kdebug
 
 We have already prepared a [template yaml](./node-problem-detector.yaml) file for you to help you deploy the intergration application of npd-kdebug. You can run the following command to deploy the integrated daemon app to your kubernetes cluster.
 ```shell
-kubectl deploy -f ./node-problem-detector/node-problem-detector.yaml
+kubectl apply -f ./node-problem-detector/node-problem-detector.yaml
 ```
 
 ## What can npd-kdebug show you

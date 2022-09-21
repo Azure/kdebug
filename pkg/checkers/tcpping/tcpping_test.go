@@ -12,7 +12,7 @@ import (
 func TestCheck(t *testing.T) {
 	checker := &TCPChecker{
 		dialer: net.Dialer{
-			Timeout: timeOut,
+			Timeout: TimeOut,
 		},
 		targets: []pingEndpoint{
 			{
@@ -32,7 +32,7 @@ func TestCheck(t *testing.T) {
 				t.Errorf("fooTest didn't fail")
 			}
 		}
-		if strings.Contains(result.Description, "google") {
+		if strings.Contains(result.Description, "Google") {
 			if result.Error != "" {
 				t.Errorf("google test fail %v\n", result.Error)
 			}

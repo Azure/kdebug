@@ -10,7 +10,7 @@ import (
 func TestReboot(t *testing.T) {
 	tool := Tool{}
 	err := tool.Run(&base.ToolContext{
-		VmRebootDetector: base.VMRebootDetector{},
+		Config: &Config{},
 	})
 	if err != nil {
 		t.Error(err)

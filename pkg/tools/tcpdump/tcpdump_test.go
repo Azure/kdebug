@@ -2,8 +2,6 @@ package tcpdump
 
 import (
 	"testing"
-
-	"github.com/Azure/kdebug/pkg/base"
 )
 
 func TestParseIPAndPort_Success(t *testing.T) {
@@ -31,10 +29,8 @@ func TestParseIPAndPort_Success(t *testing.T) {
 func TestGenerateTcpdumpParamerters_Success(t *testing.T) {
 	tcpdumptool := New()
 
-	ctx := &base.ToolContext{
-		Tcpdump: base.Tcpdump{"192.168.1.1:1", "23.32.10.2:80", ":443", "19920", true},
-	}
-	tcpdumptool.ParseParameters(ctx)
+	config := &Config{"192.168.1.1:1", "23.32.10.2:80", ":443", "19920", true}
+	tcpdumptool.ParseParameters(config)
 	parameter := tcpdumptool.GenerateTcpdumpParamerters()
 
 	expected := "-nvvv src 192.168.1.1 and src port 1 and dst 23.32.10.2 and dst port 80 and port 443 and tcp"

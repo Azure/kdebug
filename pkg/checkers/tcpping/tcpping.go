@@ -8,21 +8,24 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/kdebug/pkg/base"
-
-	"github.com/fatih/color"
 	"github.com/shirou/gopsutil/process"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/Azure/kdebug/pkg/base"
 )
 
 const KubernetesServiceHost = "KUBERNETES_SERVICE_HOST"
-const timeOut = 1000 * time.Millisecond
+const TimeOut = 1000 * time.Millisecond
 
-const (
-	GoogleTarget = "google.com:443"
-)
+var PublicTargets = []pingEndpoint{
+	{
+		ServerAddress: "www.google.com:443",
+		Name:          "Google",
+		NameSpace:     "",
+	},
+}
 
 type pingEndpoint struct {
 	ServerAddress string
@@ -35,7 +38,8 @@ func (t *TCPChecker) ping(serverAddr string) error {
 	if err != nil {
 		return err
 	}
-	conn.Close()
+	defer conn.Close()
+	conn.(*net.TCPConn).SetLinger(0)
 	return nil
 }
 
@@ -47,7 +51,7 @@ type TCPChecker struct {
 func New() *TCPChecker {
 	return &TCPChecker{
 		dialer: net.Dialer{
-			Timeout: timeOut,
+			Timeout: TimeOut,
 		},
 	}
 }
@@ -59,37 +63,44 @@ func (t *TCPChecker) Name() string {
 func (t *TCPChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
 	var results []*base.CheckResult
 	targets := append(t.targets, getCheckTargets(ctx)...)
-	var result *base.CheckResult
+	resultChan := make(chan *base.CheckResult, len(targets))
 	for _, pingTarget := range targets {
-		err := t.ping(pingTarget.ServerAddress)
-		if err != nil {
-			result = &base.CheckResult{
+		go func(target pingEndpoint) {
+			result := &base.CheckResult{
 				Checker: t.Name(),
-				Error:   err.Error(),
-				Description: color.RedString(fmt.Sprintf("Fail to establish tcp connection to %s (%s) in namespace %s.",
-					pingTarget.ServerAddress, pingTarget.Name, pingTarget.NameSpace)),
-				Recommendations: []string{"This might be expected for example the firewall blocks the traffic"},
 			}
-		} else {
-			result = &base.CheckResult{
-				Checker:     t.Name(),
-				Description: color.GreenString(fmt.Sprintf("Successfully establish tcp connection to %s (%s) in namespace %s", pingTarget.ServerAddress, pingTarget.Name, pingTarget.NameSpace)),
+			err := t.ping(target.ServerAddress)
+			sb := strings.Builder{}
+			if err != nil {
+				sb.WriteString(fmt.Sprintf("Fail to establish tcp connection to %s (%s) ",
+					target.ServerAddress, target.Name))
+				result.Error = err.Error()
+				result.Recommendations = []string{"Check firewall settings if this is not expected."}
+			} else {
+				sb.WriteString(fmt.Sprintf("Successfully establish tcp connection to %s (%s)", target.ServerAddress, target.Name))
 			}
-		}
+			if target.NameSpace != "" {
+				sb.WriteString(fmt.Sprintf(" in namespace %s", target.NameSpace))
+			}
+			sb.WriteString("\n")
+			result.Description = sb.String()
+			resultChan <- result
+		}(pingTarget)
+	}
+	for i := 0; i < len(targets); i++ {
+		result := <-resultChan
 		results = append(results, result)
 	}
-
 	return results, nil
 }
 
 func getCheckTargets(c *base.CheckContext) []pingEndpoint {
 	var targets []pingEndpoint
-	targets = append(targets, pingEndpoint{Name: "Google", ServerAddress: GoogleTarget})
-
+	targets = append(targets, PublicTargets...)
 	if c.KubeClient != nil {
 		services, err := getServicePingEndpoint(c)
 		if err != nil {
-			log.Warn(fmt.Sprintf("Fetch cluster servuce ping endpoint error %v.Skip those checks", err))
+			log.Warnf("Fetch cluster service ping endpoint error %v.Skip those checks", err)
 		} else {
 			targets = append(targets, services...)
 		}
@@ -150,13 +161,13 @@ func checkIfInsideKubernetes() bool {
 	// check in a host vm
 	processes, err := process.Processes()
 	if err != nil {
-		log.Warn(fmt.Sprintf("List process error %v. Skip in-cluster tcp checking\n", err))
+		log.Warnf("List process error %v. Skip in-cluster tcp checking\n", err)
 		return false
 	}
 	for _, proc := range processes {
 		name, err := proc.Name()
 		if err != nil {
-			log.Warn(fmt.Sprintf("List process error %v. Skip in-cluster tcp checking\n", err))
+			log.Warnf("List process error %v. Skip in-cluster tcp checking\n", err)
 			return false
 		}
 		if name == "kubelet" {

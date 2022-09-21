@@ -8,12 +8,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
+	"strings"
 	"time"
 
 	msal "github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 )
+
+var cloudToScope = map[string]string{
+	"azurecloud":        "https://pas.windows.net/CheckMyAccess/Linux/.default",
+	"azurechinacloud":   "https://pas.chinacloudapi.cn/CheckMyAccess/Linux/.default",
+	"azureusgovernment": "https://pasff.usgovcloudapi.net/CheckMyAccess/Linux/.default",
+}
+
+var cloudToAuthority = map[string]string{
+	"azurecloud":        "https://login.microsoftonline.com/common",
+	"azurechinacloud":   "https://login.chinacloudapi.cn/common",
+	"azureusgovernment": "https://login.microsoftonline.us/common",
+}
 
 // prepareRequestData prepares AAD token request data
 func prepareRequestData(sshPubKey ssh.PublicKey) (map[string]string, error) {
@@ -46,8 +60,18 @@ func prepareRequestData(sshPubKey ssh.PublicKey) (map[string]string, error) {
 	return data, nil
 }
 
+// getSupportedClouds returns supported cloud names
+func getSupportedClouds() []string {
+	cloudNames := []string{}
+	for n := range cloudToScope {
+		cloudNames = append(cloudNames, n)
+	}
+	sort.Strings(cloudNames)
+	return cloudNames
+}
+
 // acquireCertificate acquires SSH certificate from AAD
-func acquireCertificate(useAzureCLI bool, sshPubKey ssh.PublicKey) (*ssh.Certificate, error) {
+func acquireCertificate(cloud string, useAzureCLI bool, sshPubKey ssh.PublicKey) (*ssh.Certificate, error) {
 	// Prepare token request data
 	data, err := prepareRequestData(sshPubKey)
 	if err != nil {
@@ -58,19 +82,27 @@ func acquireCertificate(useAzureCLI bool, sshPubKey ssh.PublicKey) (*ssh.Certifi
 	}).Debug("Token request data")
 
 	// Request token
+	authority := cloudToAuthority[cloud]
+	if authority == "" {
+		return nil, fmt.Errorf("Unsupported cloud: %s. Supported clouds include %+v", cloud, getSupportedClouds())
+	}
 	httpClient := &http.Client{
 		Timeout:   time.Minute,
 		Transport: &Transport{data: data},
 	}
 	client, err := msal.New(AzureCLIClientId,
+		msal.WithAuthority(authority),
 		msal.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, fmt.Errorf("Fail to create MSAL client: %+v", err)
 	}
 
-	scopes := []string{
-		"https://pas.windows.net/CheckMyAccess/Linux/.default",
+	scope := cloudToScope[strings.ToLower(cloud)]
+	if scope == "" {
+		return nil, fmt.Errorf("Unsupported cloud: %s. Supported clouds include %+v", cloud, getSupportedClouds())
 	}
+
+	scopes := []string{scope}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	var authResult msal.AuthResult

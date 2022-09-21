@@ -1,8 +1,8 @@
 ## What is npd-kdebug
 
-node-problem-detector aims to make various node problems visible to the upstream layers in the cluster management stack. It is a daemon that runs on each node, detects node problems and reports them to apiserver. node-problem-detector can either run as a DaemonSet or run standalone. Now it is running as a Kubernetes Addon enabled by default in the GCE cluster.
+[node-problem-detector](https://github.com/kubernetes/node-problem-detector) aims to make various node problems visible to the upstream layers in the cluster management stack. It is a daemon that runs on each node, detects node problems and reports them to apiserver. node-problem-detector can either run as a DaemonSet or run standalone. Now it is running as a Kubernetes Addon enabled by default in the GCE cluster.
 
-In this project, we integrate the node-problem-detector with kdebug. After deploying kdebug with a specific check mode and node-problem-detector, kdebug will try to detect potential problems under the check mode. The results of the check will pass to node-problem-detector, and be reported through problem APIs of node-problem-detector. 
+In this example, we integrate the node-problem-detector with kdebug. After deploying kdebug with a specific check mode and node-problem-detector, kdebug will try to detect potential problems under the check mode. The results of the check will pass to node-problem-detector, and be reported through problem APIs of node-problem-detector. 
 * `NodeCondition`: Permanent problem that makes the node unavailable for pods should
 be reported as `NodeCondition`.
 * `Event`: Temporary problem that has limited impact on pod but is informative
@@ -14,7 +14,7 @@ We call the integration of node-problem-detector(npd) and kdebug as **npd-kdebug
 
 We have already prepared a [template yaml](./node-problem-detector.yaml) file for you to help you deploy the intergration application of npd-kdebug. You can run the following command to deploy the integrated daemon app to your kubernetes cluster.
 ```shell
-kubectl deploy -f ./node-problem-detector/node-problem-detector.yaml
+kubectl apply -f ./node-problem-detector.yaml
 ```
 
 ## What can npd-kdebug show you

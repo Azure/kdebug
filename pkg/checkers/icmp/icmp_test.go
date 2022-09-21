@@ -1,9 +1,10 @@
 package icmpping
 
 import (
-	"github.com/Azure/kdebug/pkg/base"
 	"strings"
 	"testing"
+
+	"github.com/Azure/kdebug/pkg/base"
 )
 
 func TestCheck(t *testing.T) {

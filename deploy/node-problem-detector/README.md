@@ -12,7 +12,7 @@ We call the integration of node-problem-detector(npd) and kdebug as **npd-kdebug
 
 ## How to deploy npd-kdebug
 
-We have already prepared a [template yaml](./node-problem-detector.yaml) file for you to help you deploy the intergration application of npd-kdebug. You can run the following command to deploy the integrated daemon app to your kubernetes cluster.
+We have already prepared a [sample yaml](./node-problem-detector.yaml) file for you to help you deploy the intergration application of npd-kdebug with DNS check mode. You can run the following command to deploy the integrated daemon app to your kubernetes cluster.
 ```shell
 kubectl apply -f ./node-problem-detector/node-problem-detector.yaml
 ```
@@ -32,3 +32,15 @@ kubectl apply -f ./node-problem-detector/node-problem-detector.yaml
     * If `Status=True`, it means npd-kdebug detected some DNS problems, and error messages show in `Messages`.
 
 ![image](../../resource/npd/npd-dashboard-DNSProblem.png)
+
+## Customization
+
+Besides `DNSProblem` check, you can integrate other kdebug check modes with npd. To customize different check modes npd-kdebug, you can follow the step-by-step tutorial in this section.
+
+* Step 1: Copy the [template yaml](./node-problem-detector-template.yaml) and open it.
+* Step 2: Replace `<YOUR_JSON_NAME>` with a json file name you want at `line 42`. Recommend to include the check mode name you want to deploy. For example, `kdebug-http`.
+
+![image](../../resource/npd/yml-your_json_name.png)
+* Step 3: Now you should edit your config json. This part of contents describe the parameters that how you run the `kdebug`, which is as the custom plugin of npd.
+
+![image](../../resource/npd/yml-json-your_json_name.png)

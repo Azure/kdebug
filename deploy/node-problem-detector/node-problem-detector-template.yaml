@@ -39,7 +39,7 @@ spec:
         command:
         - /node-problem-detector
         - --logtostderr
-        - --config.custom-plugin-monitor=/config/kdebug-http.json
+        - --config.custom-plugin-monitor=/config/<YOUR_JSON_NAME>.json
         - --apiserver-override=kubernetes
         image: k8s.gcr.io/node-problem-detector/node-problem-detector:v0.8.7
         resources:
@@ -90,7 +90,7 @@ metadata:
   name: node-problem-detector-config
   namespace: kube-system
 data:
-  kdebug-http.json: |
+  <YOUR_JSON_NAME>.json: |
     {
         "plugin": "custom",
         "pluginConfig": {
@@ -100,35 +100,35 @@ data:
           "concurrency": 3,
           "enable_message_change_based_condition_update": false
         },
-        "source": "kdebug-http",
+        "source": "<YOUR_JSON_NAME>",
         "metricsReporting": true,
         "conditions": [
             {
-                "type": "HTTPProblem",
-                "reason": "HTTPChecksPass",
-                "message": "No HTTP problem found"
+                "type": "<CONDITION_NAME>",
+                "reason": "<CHECK_MODE_NAME>ChecksPass",
+                "message": "No <CHECK_MODE_NAME> problem found"
             }
         ],
         "rules": [
             {
                 "type": "temporary",
-                "reason": "HTTPHasProblem",
+                "reason": "<CHECK_MODE_NAME>HasProblem",
                 "path": "/opt/kdebug/kdebug",
                 "args": [
                   "-c",
-                  "http",
+                  "<CHECK_MODE>",
                   "-f",
                   "oneline"
                 ]
             },
             {
                 "type": "permanent",
-                "condition": "HTTPProblem",
-                "reason": "HTTPHasProblem",
+                "condition": "<CONDITION_NAME>",
+                "reason": "<CHECK_MODE_NAME>HasProblem",
                 "path": "/opt/kdebug/kdebug",
                 "args": [
                   "-c",
-                  "http",
+                  "<CHECK_MODE>",
                   "-f",
                   "oneline"
                 ]

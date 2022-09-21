@@ -10,6 +10,7 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -61,7 +62,7 @@ func processOptions(o *Options) {
 	}
 }
 
-func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, error) {
+func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, *genericclioptions.ConfigFlags, error) {
 	// Try env
 	if kubeConfigPath == "" {
 		if path := os.Getenv("KUBECONFIG"); path != "" {
@@ -78,9 +79,17 @@ func buildKubeClient(masterUrl, kubeConfigPath string) (*kubernetes.Clientset, e
 
 	config, err := clientcmd.BuildConfigFromFlags(masterUrl, kubeConfigPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return kubernetes.NewForConfig(config)
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, nil, err
+	}
+	kubeConfigFlag := genericclioptions.NewConfigFlags(false)
+	kubeConfigFlag.APIServer = &masterUrl
+	kubeConfigFlag.KubeConfig = &kubeConfigPath
+
+	return clientSet, kubeConfigFlag, nil
 }
 
 func buildCheckContext(opts *Options) (*base.CheckContext, error) {
@@ -88,7 +97,7 @@ func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 		Environment: env.GetEnvironment(),
 	}
 
-	kubeClient, err := buildKubeClient(opts.KubeMasterUrl, opts.KubeConfigPath)
+	kubeClient, _, err := buildKubeClient(opts.KubeMasterUrl, opts.KubeConfigPath)
 	if err == nil {
 		ctx.KubeClient = kubeClient
 	} else {

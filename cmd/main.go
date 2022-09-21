@@ -97,6 +97,10 @@ func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 		Environment: env.GetEnvironment(),
 	}
 
+	log.WithFields(log.Fields{
+		"env": ctx.Environment,
+	}).Debug("Environment")
+
 	kubeClient, _, err := buildKubeClient(opts.KubeMasterUrl, opts.KubeConfigPath)
 	if err == nil {
 		ctx.KubeClient = kubeClient

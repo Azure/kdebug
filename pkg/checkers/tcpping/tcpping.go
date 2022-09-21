@@ -4,12 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/shirou/gopsutil/process"
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -111,7 +108,7 @@ func getCheckTargets(c *base.CheckContext) []pingEndpoint {
 
 func getServicePingEndpoint(c *base.CheckContext) ([]pingEndpoint, error) {
 	services, err := c.KubeClient.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
-	isInKubernetes := checkIfInsideKubernetes()
+	isInKubernetes := c.Environment.HasFlag("k8s")
 	if err != nil {
 		return nil, err
 	}
@@ -150,30 +147,4 @@ func formatIP(address string) string {
 	} else {
 		return address
 	}
-}
-
-func checkIfInsideKubernetes() bool {
-	//check if in a pod
-	for _, e := range os.Environ() {
-		if strings.Contains(e, KubernetesServiceHost) {
-			return true
-		}
-	}
-	// check in a host vm
-	processes, err := process.Processes()
-	if err != nil {
-		log.Warnf("List process error %v. Skip in-cluster tcp checking\n", err)
-		return false
-	}
-	for _, proc := range processes {
-		name, err := proc.Name()
-		if err != nil {
-			log.Warnf("List process error %v. Skip in-cluster tcp checking\n", err)
-			return false
-		}
-		if name == "kubelet" {
-			return true
-		}
-	}
-	return false
 }

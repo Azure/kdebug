@@ -106,7 +106,8 @@ func buildCheckContext(opts *Options) (*base.CheckContext, error) {
 
 func buildToolContext(opts *Options) (*base.ToolContext, error) {
 	ctx := &base.ToolContext{
-		Args: opts.RemainingArgs,
+		Args:        opts.RemainingArgs,
+		Environment: env.GetEnvironment(),
 	}
 	ctx.Tcpdump = opts.Tcpdump
 	ctx.VmRebootDetector = opts.VMRebootDetect

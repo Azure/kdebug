@@ -20,6 +20,7 @@ type CheckContext struct {
 
 type ToolContext struct {
 	Args             []string
+	Environment      env.Environment
 	Tcpdump          Tcpdump
 	VmRebootDetector VMRebootDetector
 	UpgradeInspector UpgradeInspector
@@ -39,8 +40,8 @@ type Tcpdump struct {
 }
 
 type UpgradeInspector struct {
-	CheckDays   int `long:"checkdays" description:"Days you want to look back to search for package upgrade history. Default is 7."`
-	RecordLimit int `long:"recordlimit" description:"Number of records you want to inspect for package upgrade history. Default is 50."`
+	CheckDays   int `long:"checkdays" default:"7" description:"Days you want to look back to search for package upgrade history. Default is 7."`
+	RecordLimit int `long:"recordlimit" default:"50" description:"Number of records you want to inspect for package upgrade history. Default is 50."`
 }
 
 type AadSsh struct {

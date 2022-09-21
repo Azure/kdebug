@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -34,9 +33,9 @@ func (c *DiskReadOnlyChecker) Name() string {
 }
 
 func (c *DiskReadOnlyChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
-	if !strings.HasPrefix(runtime.GOOS, "linux") {
+	if !ctx.Environment.HasFlag("linux") {
 		// This checker is only valid on Linux.
-		log.Infof("Skip %s checker as it not applicable on %s", c.Name(), runtime.GOOS)
+		log.Infof("Skip %s checker in non-linux os", c.Name())
 		return []*base.CheckResult{}, nil
 	}
 	homeDir, err := os.UserHomeDir()

@@ -27,5 +27,7 @@ func getFlags() []string {
 	flags := []string{}
 	flags = append(flags, getLinuxFlags()...)
 	flags = append(flags, getAzureFlags()...)
+	flags = append(flags, getK8sFlags()...)
+
 	return flags
 }

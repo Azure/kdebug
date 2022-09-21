@@ -118,6 +118,9 @@ func buildToolContext(opts *Options) (*base.ToolContext, error) {
 	ctx := &base.ToolContext{
 		Args: opts.RemainingArgs,
 	}
+	if _, configFlags, err := buildKubeClient(opts.KubeMasterUrl, opts.KubeConfigPath); err == nil {
+		ctx.KubeConfigFlag = configFlags
+	}
 	return ctx, nil
 }
 

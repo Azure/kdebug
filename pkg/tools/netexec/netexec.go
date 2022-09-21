@@ -7,10 +7,19 @@ import (
 	"strings"
 
 	"github.com/Azure/kdebug/pkg/base"
+	"github.com/jessevdk/go-flags"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	kubecmd "k8s.io/kubectl/pkg/cmd"
 )
+
+type Config struct {
+	Pid       string `long:"pid" description:"Attach into a specific pid's network namespace."`
+	PodName   string `long:"pod" description:"Attach into a specific pod's network namespace. Caution: The command will use ephemeral debug container to attach a container with 'ghcr.io/azure/kdebug:main' to the target pod."`
+	Namespace string `long:"namespace" description:"the namespace of the pod."`
+	Command   string `long:"command" description:"Customize the command to be run in container namespace. Leave it blank to use 'sh'."`
+	Image     string `long:"image" description:"Customize the image to be used to run command when using --pod. Leave it blank to use busybox."`
+}
 
 type NetexecTool struct {
 	pid       string
@@ -62,35 +71,48 @@ func (c *NetexecTool) Run(ctx *base.ToolContext) error {
 	return nil
 }
 
+func (c *NetexecTool) ParseArgs(ctx *base.ToolContext, args []string) error {
+	var config Config
+	remainingArgs, err := flags.ParseArgs(&config, args)
+	if err != nil {
+		return err
+	}
+	ctx.Config = &config
+	ctx.Args = remainingArgs
+	return nil
+}
+
 func (c *NetexecTool) parseAndCheckParameters(ctx *base.ToolContext) error {
-	if len(ctx.Netexec.Pid) == 0 && len(ctx.Netexec.PodName) == 0 {
-		return fmt.Errorf("Either --netexec.pid and --netexec.pod should be set.")
+	config := ctx.Config.(*Config)
+
+	if len(config.Pid) == 0 && len(config.PodName) == 0 {
+		return fmt.Errorf("Either --pid and --pod should be set.")
 	}
-	if len(ctx.Netexec.Pid) > 0 && len(ctx.Netexec.PodName) > 0 {
-		return fmt.Errorf("--netexec.pid and --netexec.pod can not be assigned together. Please set either of them.")
+	if len(config.Pid) > 0 && len(config.PodName) > 0 {
+		return fmt.Errorf("--pid and --pod can not be assigned together. Please set either of them.")
 	}
-	if len(ctx.Netexec.PodName) > 0 {
+	if len(config.PodName) > 0 {
 		if ctx.KubeConfigFlag == nil {
 			return fmt.Errorf("kubernetes client is not availble. Check kubeconfig.")
 		}
 	}
 
-	c.pid = ctx.Netexec.Pid
-	c.podName = ctx.Netexec.PodName
-	if len(ctx.Netexec.Command) > 0 {
-		c.command = ctx.Netexec.Command
+	c.pid = config.Pid
+	c.podName = config.PodName
+	if len(config.Command) > 0 {
+		c.command = config.Command
 	} else {
 		c.command = DefaultCommand
 	}
 
-	if len(ctx.Netexec.Image) > 0 {
-		c.image = ctx.Netexec.Image
+	if len(config.Image) > 0 {
+		c.image = config.Image
 	} else {
 		c.image = DefaultContainerImage
 	}
 
-	if len(ctx.Netexec.Namespace) > 0 {
-		c.namespace = ctx.Netexec.Namespace
+	if len(config.Namespace) > 0 {
+		c.namespace = config.Namespace
 	} else {
 		c.namespace = DefaultNamespace
 	}

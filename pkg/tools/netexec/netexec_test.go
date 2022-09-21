@@ -10,7 +10,7 @@ import (
 func TestParseParameterPid_Success(t *testing.T) {
 	netexec := &NetexecTool{}
 	netexec.parseAndCheckParameters(&base.ToolContext{
-		Netexec: base.Netexec{
+		Config: &Config{
 			Pid:     "1",
 			Command: "bash",
 		},
@@ -28,7 +28,7 @@ func TestParseParameterPid_Success(t *testing.T) {
 func TestParseParameterPod_Success(t *testing.T) {
 	netexec := &NetexecTool{}
 	netexec.parseAndCheckParameters(&base.ToolContext{
-		Netexec: base.Netexec{
+		Config: &Config{
 			PodName:   "pod",
 			Command:   "bash",
 			Namespace: "kube-system",
@@ -57,26 +57,26 @@ func TestParseParameterPod_Success(t *testing.T) {
 func TestParseParameter_Failed(t *testing.T) {
 	netexec := &NetexecTool{}
 	err := netexec.parseAndCheckParameters(&base.ToolContext{
-		Netexec: base.Netexec{},
+		Config: &Config{},
 	})
 
 	if err == nil {
-		t.Error("Should got err: 'Either --netexec.pid and --netexec.pod should be set.', but error is not raised")
+		t.Error("Should got err: 'Either --pid and --pod should be set.', but error is not raised")
 	}
 
 	err = netexec.parseAndCheckParameters(&base.ToolContext{
-		Netexec: base.Netexec{
+		Config: &Config{
 			Pid:     "1",
 			PodName: "pod",
 		},
 	})
 
 	if err == nil {
-		t.Error("Should got err: '--netexec.pid and --netexec.pod can not be assigned together. Please set either of them.', but error is not raised")
+		t.Error("Should got err: '--pid and --pod can not be assigned together. Please set either of them.', but error is not raised")
 	}
 
 	err = netexec.parseAndCheckParameters(&base.ToolContext{
-		Netexec: base.Netexec{
+		Config: &Config{
 			PodName:   "pod",
 			Command:   "bash",
 			Namespace: "kube-system",

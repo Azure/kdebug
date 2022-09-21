@@ -16,7 +16,7 @@ import (
 type Config struct {
 	Pid       string `long:"pid" description:"Attach into a specific pid's network namespace."`
 	PodName   string `long:"pod" description:"Attach into a specific pod's network namespace. Caution: The command will use ephemeral debug container to attach a container with 'ghcr.io/azure/kdebug:main' to the target pod."`
-	Namespace string `long:"namespace" description:"the namespace of the pod."`
+	Namespace string `long:"namespace" description:"The namespace of the pod."`
 	Command   string `long:"command" description:"Customize the command to be run in container namespace. Leave it blank to use 'sh'."`
 	Image     string `long:"image" description:"Customize the image to be used to run command when using --pod. Leave it blank to use busybox."`
 }
@@ -50,25 +50,11 @@ func logAndExec(name string, args ...string) *exec.Cmd {
 }
 
 func (c *NetexecTool) Run(ctx *base.ToolContext) error {
-	if err := c.parseAndCheckParameters(ctx); err != nil {
-		return err
-	}
-
 	if len(c.pid) > 0 {
-		err := c.checkWithPid()
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return c.checkWithPid()
 	}
 
-	err := c.checkWithPod(ctx.KubeConfigFlag)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.checkWithPod(ctx.KubeConfigFlag)
 }
 
 func (c *NetexecTool) ParseArgs(ctx *base.ToolContext, args []string) error {
@@ -79,7 +65,7 @@ func (c *NetexecTool) ParseArgs(ctx *base.ToolContext, args []string) error {
 	}
 	ctx.Config = &config
 	ctx.Args = remainingArgs
-	return nil
+	return c.parseAndCheckParameters(ctx)
 }
 
 func (c *NetexecTool) parseAndCheckParameters(ctx *base.ToolContext) error {
@@ -131,11 +117,7 @@ func (c *NetexecTool) checkWithPid() error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.Run()
 }
 
 func (c *NetexecTool) checkWithPod(configFlags *genericclioptions.ConfigFlags) error {
@@ -148,10 +130,5 @@ func (c *NetexecTool) checkWithPod(configFlags *genericclioptions.ConfigFlags) e
 	})
 	kubectlCmd.SetArgs(arg)
 
-	err := kubectlCmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return kubectlCmd.Execute()
 }

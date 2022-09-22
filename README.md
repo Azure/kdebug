@@ -176,6 +176,20 @@ kdebug -t vmrebootdetector \
     --checkdays=100
 ```
 
+### Package upgrade inspect
+
+Check upgraded packages within last 14 days:
+
+```
+kdebug --tool upgradeinspector --checkdays 14
+```
+
+Check upgraded package within last 7 days, limit 10 records:
+
+```
+kdebug --tool upgradeinspector --recordlimit 10
+```
+
 ### AAD SSH
 
 SSH via AAD. See [Azure Linux VMs and Azure AD](https://learn.microsoft.com/en-us/azure/active-directory/devices/howto-vm-sign-in-azure-ad-linux).

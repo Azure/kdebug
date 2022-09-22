@@ -22,6 +22,7 @@ type CheckContext struct {
 type ToolContext struct {
 	Args           []string
 	Config         interface{}
+	Environment    env.Environment
 	KubeConfigFlag *genericclioptions.ConfigFlags
 }
 

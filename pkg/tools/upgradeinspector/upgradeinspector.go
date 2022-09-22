@@ -80,8 +80,8 @@ func (t *UpgradeInspectTool) exec() error {
 
 func (t *UpgradeInspectTool) parseResult(result string) string {
 	sb := strings.Builder{}
-	logs := strings.Split(result, "\n")
-	logNum := len(logs) - 1
+	logs := t.filterResult(result)
+	logNum := len(logs)
 
 	if logNum == 0 {
 		sb.WriteString(color.GreenString("\nNo package upgrade log found\n"))
@@ -89,18 +89,29 @@ func (t *UpgradeInspectTool) parseResult(result string) string {
 		sb.WriteString(fmt.Sprintf("\n%-19s\t%-30s\t%-20s\t%-20s\n\n", columns[0], columns[1], columns[2], columns[3]))
 	}
 
-	cutTime := time.Now().AddDate(0, 0, -t.checkDays)
 	for i := 0; i < logNum && i < t.recordLimit; i++ {
 		strs := strings.Split(logs[i], " ")
-		logTime, err := time.Parse("2006-01-02 15:04:05", fmt.Sprintf(`%s %s`, strs[0], strs[1]))
-		if err == nil && logTime.After(cutTime) {
-			sb.WriteString(fmt.Sprintf("%v-%v\t%-30s\t%-20s\t%-20s\n", strs[0], strs[1], strs[3], strs[4], strs[5]))
-		}
+		sb.WriteString(fmt.Sprintf("%v-%v\t%-30s\t%-20s\t%-20s\n", strs[0], strs[1], strs[3], strs[4], strs[5]))
 	}
 	if t.recordLimit < logNum {
 		sb.WriteString(color.YellowString("\n%v package(s) omitted\n", logNum-t.recordLimit))
 	}
 	return sb.String()
+}
+
+func (t *UpgradeInspectTool) filterResult(result string) []string {
+	logs := strings.Split(result, "\n")
+	filtered := []string{}
+	cutTime := time.Now().AddDate(0, 0, -t.checkDays)
+
+	for i := 0; i < len(logs)-1; i++ {
+		strs := strings.Split(logs[i], " ")
+		logTime, err := time.Parse("2006-01-02 15:04:05", fmt.Sprintf(`%s %s`, strs[0], strs[1]))
+		if err == nil && logTime.After(cutTime) {
+			filtered = append(filtered, logs[i])
+		}
+	}
+	return filtered
 }
 
 func envCheck(environment env.Environment) bool {

@@ -21,6 +21,7 @@ Currently kdebug supports following checks:
 * Kube Object Size: Check configmap/secret object size.
 * Kube pod: Check pod restart reasons.
 * OOM: Analysis out-of-memory events.
+* System Load: Check the CPU and Memory of VM and some primary processes (etcd, kubelet...)
 
 ## How to use
 
@@ -129,28 +130,34 @@ Use following command to start a tool:
 kdebug -t <tool>
 ```
 
+Show tool specific options:
+
+```bash
+kdebug -t <tool> -h
+```
+
 ### Tcpdump
 
 Attach to network namespace of a process with pid=100 and capture all traffic:
 
 ```bash
-kdebug -t tcpdump --tcpdump.pid=100
+kdebug -t tcpdump --pid=100
 ```
 
 With source and destination specified, and TCP only:
 
 ```bash
 kdebug -t tcpdump \
-    --tcpdump.pid=100 \
-    --tcpdump.source=10.0.0.1:1000 \
-    --tcpdump.destination=10.0.0.2:2000 \
-    --tcpdump.tcponly
+    --pid=100 \
+    --source=10.0.0.1:1000 \
+    --destination=10.0.0.2:2000 \
+    --tcponly
 ```
 
-`--tcpdump.host` matches either source or destination:
+`--host` matches either source or destination:
 
 ```bash
-kdebug -t tcpdump --tcpdump.host=10.0.0.1:1000
+kdebug -t tcpdump --host=10.0.0.1:1000
 ```
 
 ### Reboot reason
@@ -165,7 +172,7 @@ Check VM last reboot reason within last 100 days:
 
 ```
 kdebug -t vmrebootdetector \
-    --vmrebootdetector.checkdays=100
+    --checkdays=100
 ```
 
 ### Package upgrade inspect
@@ -173,13 +180,13 @@ kdebug -t vmrebootdetector \
 Check upgraded packages within last 14 days:
 
 ```
-kdebug --tool upgradeinspector --upgradeinspector.checkdays 14
+kdebug --tool upgradeinspector --checkdays 14
 ```
 
 Check upgraded package within last 7 days, limit 10 records:
 
 ```
-kdebug --tool upgradeinspector --upgradeinspector.recordlimit 10
+kdebug --tool upgradeinspector --recordlimit 10
 ```
 
 ### AAD SSH
@@ -200,7 +207,7 @@ Login via Azure CLI credentials:
 
 ```bash
 az login
-kdebug -t aadssh --aadssh.use-azure-cli <user>@<tenant>@<hostname-or-ip>
+kdebug -t aadssh --use-azure-cli <user>@<tenant>@<hostname-or-ip>
 ```
 
 ## Development

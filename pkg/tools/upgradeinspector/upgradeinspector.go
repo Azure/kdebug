@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/kdebug/pkg/base"
 	"github.com/Azure/kdebug/pkg/env"
 	"github.com/fatih/color"
+	flags "github.com/jessevdk/go-flags"
 )
 
 const logPath = "/var/log/dpkg.log"
@@ -27,12 +28,28 @@ type UpgradeInspectTool struct {
 	recordLimit int
 }
 
+type Config struct {
+	CheckDays   int `long:"checkdays" default:"7" description:"Days you want to look back to search for package upgrade history. Default is 7."`
+	RecordLimit int `long:"recordlimit" default:"50" description:"Number of records you want to inspect for package upgrade history. Default is 50."`
+}
+
 func (t *UpgradeInspectTool) Name() string {
 	return "upgradeinspector"
 }
 
 func New() *UpgradeInspectTool {
 	return &UpgradeInspectTool{}
+}
+
+func (t *UpgradeInspectTool) ParseArgs(ctx *base.ToolContext, args []string) error {
+	var config Config
+	remaningArgs, err := flags.ParseArgs(&config, args)
+	if err != nil {
+		return err
+	}
+	ctx.Config = &config
+	ctx.Args = remaningArgs
+	return nil
 }
 
 func (t *UpgradeInspectTool) Run(ctx *base.ToolContext) error {
@@ -45,8 +62,9 @@ func (t *UpgradeInspectTool) Run(ctx *base.ToolContext) error {
 }
 
 func (t *UpgradeInspectTool) parseArgument(ctx *base.ToolContext) {
-	t.checkDays = ctx.UpgradeInspector.CheckDays
-	t.recordLimit = ctx.UpgradeInspector.RecordLimit
+	config := ctx.Config.(*Config)
+	t.checkDays = config.CheckDays
+	t.recordLimit = config.RecordLimit
 }
 
 func (t *UpgradeInspectTool) exec() error {

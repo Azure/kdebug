@@ -11,7 +11,7 @@ func TestUpgradeParser_Success(t *testing.T) {
 	upgradeInspectTool := New()
 
 	ctx := &base.ToolContext{
-		UpgradeInspector: base.UpgradeInspector{CheckDays: 7, RecordLimit: 50},
+		Config: &Config{},
 	}
 
 	upgradeInspectTool.parseArgument(ctx)

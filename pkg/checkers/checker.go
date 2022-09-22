@@ -26,7 +26,7 @@ func Check(ctx *base.CheckContext, checkerNames []string) ([]*base.CheckResult, 
 	for _, checker := range checkers {
 		r, err := checker.Check(ctx)
 		if err != nil {
-			log.Printf("Error in checker %s: %s", err, checker.Name())
+			log.Printf("Error in checker %s: %s", checker.Name(), err)
 		}
 		results = append(results, r...)
 	}

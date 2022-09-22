@@ -3,11 +3,11 @@ package oom
 import (
 	"bufio"
 	"fmt"
-	"github.com/Azure/kdebug/pkg/base"
-	"github.com/Azure/kdebug/pkg/env"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/Azure/kdebug/pkg/base"
 )
 
 const (
@@ -53,7 +53,8 @@ func (c *OOMChecker) checkOOM(ctx *base.CheckContext) (*base.CheckResult, error)
 	result := &base.CheckResult{
 		Checker: c.Name(),
 	}
-	if !envCheck(ctx.Environment) {
+	//todo:support other os
+	if !ctx.Environment.HasFlag("linux") {
 		result.Description = fmt.Sprint("Skip oom check in non-linux os")
 		return result, nil
 	}
@@ -106,9 +107,4 @@ func parseOOMContent(content string) (string, error) {
 	} else {
 		return fmt.Sprintf("progress:[%s %s] is OOM kill at time [%s]. [rss:%s] [oom_score_adj:%s]\n", match[2], match[3], match[1], match[4], match[5]), nil
 	}
-}
-
-func envCheck(environment env.Environment) bool {
-	//todo:support other os
-	return environment.HasFlag("ubuntu")
 }

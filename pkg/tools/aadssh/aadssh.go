@@ -7,9 +7,11 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/Azure/kdebug/pkg/base"
+	flags "github.com/jessevdk/go-flags"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/Azure/kdebug/pkg/base"
 )
 
 const (
@@ -26,6 +28,11 @@ const (
 type AadSsh struct {
 }
 
+type Config struct {
+	Cloud       string `long:"cloud" description:"Azure cloud name. Support values are: azurecloud, azurechinacloud, azureusgovernment"`
+	UseAzureCLI bool   `long:"use-azure-cli" description:"Use Azure CLI credentials"`
+}
+
 func New() *AadSsh {
 	return &AadSsh{}
 }
@@ -34,7 +41,25 @@ func (c *AadSsh) Name() string {
 	return "AAD SSH"
 }
 
+func (c *AadSsh) ParseArgs(ctx *base.ToolContext, args []string) error {
+	var config Config
+	remainingArgs, err := flags.ParseArgs(&config, args)
+	if err != nil {
+		return err
+	}
+	ctx.Args = remainingArgs
+	ctx.Config = &config
+	return nil
+}
+
 func (c *AadSsh) Run(ctx *base.ToolContext) error {
+	config := ctx.Config.(*Config)
+
+	if config.Cloud == "" {
+		// Default to public cloud
+		config.Cloud = "azurecloud"
+	}
+
 	// Ensure key dir
 	sshDir, err := ensureSSHKeyDir(SSHDirName)
 	if err != nil {
@@ -68,7 +93,7 @@ func (c *AadSsh) Run(ctx *base.ToolContext) error {
 		log.Info("Acquire a new SSH certificate from AAD")
 
 		// Acquire a certificate from AAD
-		sshCert, err = acquireCertificate(ctx.AadSsh.UseAzureCLI, sshPubKey)
+		sshCert, err = acquireCertificate(config.Cloud, config.UseAzureCLI, sshPubKey)
 		if err != nil {
 			return fmt.Errorf("Fail to acquire SSH certificate from AAD: %+v", err)
 		}

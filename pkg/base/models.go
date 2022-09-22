@@ -1,6 +1,7 @@
 package base
 
 import (
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/Azure/kdebug/pkg/env"
@@ -19,9 +20,10 @@ type CheckContext struct {
 }
 
 type ToolContext struct {
-	Args        []string
-	Config      interface{}
-	Environment env.Environment
+	Args           []string
+	Config         interface{}
+	Environment    env.Environment
+	KubeConfigFlag *genericclioptions.ConfigFlags
 }
 
 type CheckResult struct {

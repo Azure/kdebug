@@ -117,6 +117,7 @@ Currently kdebug provides following tools:
 * Tcpdump: Wrap tcpdump command and provides a simpler interface for container scenarios.
 * Reboot reason: Inspect last reboot reason.
 * AAD SSH: SSH via AAD. This is a handy replacement for the original Azure CLI based implementation.
+* NetExec: Execute the command with the same network namespace with a specific process or pod.
 
 You can see a full list with:
 
@@ -209,6 +210,21 @@ Login via Azure CLI credentials:
 az login
 kdebug -t aadssh --use-azure-cli <user>@<tenant>@<hostname-or-ip>
 ```
+
+### NetExec
+Execute the command with the same network namespace with a process, you need to on the VM the process locate in.
+
+```bash
+kdebug -t netexec --pid=<process-pid>
+```
+
+Execute the command with the same network namespace with a pod, you need to have the kubeconfig.
+
+```bash
+kdebug -t netexec --pod=<pod-name> --namespace=<pod-namespace>
+```
+
+And specify the command with `--command=`. The default command is `sh`
 
 ## Development
 

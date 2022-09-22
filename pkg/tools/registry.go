@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/Azure/kdebug/pkg/tools/aadssh"
+	"github.com/Azure/kdebug/pkg/tools/netexec"
 	"github.com/Azure/kdebug/pkg/tools/tcpdump"
 	"github.com/Azure/kdebug/pkg/tools/upgradeinspector"
 	"github.com/Azure/kdebug/pkg/tools/vmrebootdetector"
@@ -14,6 +15,7 @@ var allTools = map[string]Tool{
 	"vmrebootdetector": vmrebootdetector.New(),
 	"upgradeinspector": upgradeinspector.New(),
 	"aadssh":           aadssh.New(),
+	"netexec":          netexec.New(),
 }
 
 func ListAllToolNames() []string {

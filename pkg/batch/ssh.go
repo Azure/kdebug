@@ -115,7 +115,7 @@ func (e *SshBatchExecutor) executeTask(task *batchTask) *BatchResult {
 	defer sess.Close()
 
 	// Execute command
-	cmd := fmt.Sprintf("/tmp/kdebug -f json")
+	cmd := fmt.Sprintf("/tmp/kdebug -f json --no-set-exit-code")
 	for _, c := range task.Checkers {
 		cmd += fmt.Sprintf(" -c %s", c)
 	}

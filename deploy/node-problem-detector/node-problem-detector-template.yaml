@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-problem-detector
+  namespace: kube-system
+  labels:
+    app: node-problem-detector
+spec:
+  selector:
+    matchLabels:
+      app: node-problem-detector
+  template:
+    metadata:
+      labels:
+        app: node-problem-detector
+    spec:
+      serviceAccountName: node-problem-detector
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      initContainers:
+      - name: download-kdebug
+        image: k8s.gcr.io/busybox:1.27
+        command:
+        - 'sh'
+        - '-c'
+        - 'wget -O /opt/kdebug/kdebug https://github.com/Azure/kdebug/releases/download/v0.4-beta-1/kdebug && chmod +x /opt/kdebug/kdebug'
+        volumeMounts:
+        - name: kdebug
+          mountPath: /opt/kdebug
+      containers:
+      - name: node-problem-detector
+        command:
+        - /node-problem-detector
+        - --logtostderr
+        - --config.custom-plugin-monitor=/config/<YOUR_JSON_NAME>.json
+        - --apiserver-override=kubernetes
+        image: k8s.gcr.io/node-problem-detector/node-problem-detector:v0.8.7
+        resources:
+          limits:
+            cpu: 10m
+            memory: 80Mi
+          requests:
+            cpu: 10m
+            memory: 80Mi
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        # Make sure node problem detector is in the same timezone
+        # with the host.
+        - name: localtime
+          mountPath: /etc/localtime
+          readOnly: true
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - name: kdebug
+          mountPath: /opt/kdebug
+          readOnly: true
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: config
+        configMap:
+          name: node-problem-detector-config
+      - name: kdebug
+        emptyDir: {}
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-problem-detector-config
+  namespace: kube-system
+data:
+  <YOUR_JSON_NAME>.json: |
+    {
+        "plugin": "custom",
+        "pluginConfig": {
+          "invoke_interval": "30s",
+          "timeout": "30s",
+          "max_output_length": 80,
+          "concurrency": 3,
+          "enable_message_change_based_condition_update": false
+        },
+        "source": "<YOUR_JSON_NAME>",
+        "metricsReporting": true,
+        "conditions": [
+            {
+                "type": "<CONDITION_NAME>",
+                "reason": "<CHECK_MODE_NAME>ChecksPass",
+                "message": "No <CHECK_MODE_NAME> problem found"
+            }
+        ],
+        "rules": [
+            {
+                "type": "temporary",
+                "reason": "<CHECK_MODE_NAME>HasProblem",
+                "path": "/opt/kdebug/kdebug",
+                "args": [
+                  "-c",
+                  "<CHECK_MODE>",
+                  "-f",
+                  "oneline"
+                ]
+            },
+            {
+                "type": "permanent",
+                "condition": "<CONDITION_NAME>",
+                "reason": "<CHECK_MODE_NAME>HasProblem",
+                "path": "/opt/kdebug/kdebug",
+                "args": [
+                  "-c",
+                  "<CHECK_MODE>",
+                  "-f",
+                  "oneline"
+                ]
+            }
+        ]
+    }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: node-problem-detector
+  labels:
+    app: node-problem-detector
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-problem-detector
+  labels:
+    app: node-problem-detector
+subjects:
+- kind: ServiceAccount
+  name: node-problem-detector
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: system:node-problem-detector
+  apiGroup: rbac.authorization.k8s.io

@@ -17,8 +17,9 @@ const (
 )
 
 var helpLink = []string{
+        "linux.die.net/man/8/mount",
+        "linux.die.net/man/8/fsck",
 	"https://askubuntu.com/a/197468",
-	"https://man7.org/linux/man-pages/man8/fsck.8.html",
 }
 
 type DiskReadOnlyChecker struct {

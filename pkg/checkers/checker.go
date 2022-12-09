@@ -2,7 +2,8 @@ package checker
 
 import (
 	"errors"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Azure/kdebug/pkg/base"
 )
@@ -26,7 +27,7 @@ func Check(ctx *base.CheckContext, checkerNames []string) ([]*base.CheckResult, 
 	for _, checker := range checkers {
 		r, err := checker.Check(ctx)
 		if err != nil {
-			log.Printf("Error in checker %s: %s", checker.Name(), err)
+			log.Warnf("Checker(%s): %s", checker.Name(), err)
 		}
 		results = append(results, r...)
 	}

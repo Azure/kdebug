@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/kdebug/pkg/checkers/dummy"
 	"github.com/Azure/kdebug/pkg/checkers/http"
 	icmpping "github.com/Azure/kdebug/pkg/checkers/icmp"
+	"github.com/Azure/kdebug/pkg/checkers/kmscachesize"
 	kubeobjectsize "github.com/Azure/kdebug/pkg/checkers/kube/objectsize"
 	"github.com/Azure/kdebug/pkg/checkers/kube/pod"
 	"github.com/Azure/kdebug/pkg/checkers/liveness"
@@ -30,6 +31,7 @@ var allCheckers = map[string]Checker{
 	"tcp":            tcpping.New(),
 	"ping":           icmpping.New(),
 	"systemload":     systemload.New(),
+	"kmscachesize":   kmscachesize.New(),
 }
 
 func ListAllCheckerNames() []string {

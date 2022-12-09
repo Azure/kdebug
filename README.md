@@ -19,12 +19,13 @@ Currently kdebug supports following checks:
 * Disk read-only: Check if the user home directory is read-only.
 * DNS: Check cluster DNS.
 * HTTP: Check HTTP connectivity to well known endpoints.
-* Kube Object Size: Check configmap/secret object size.
+* Kube object size: Check configmap/secret object size.
 * Kube pod: Check pod restart reasons.
 * OOM: Analysis out-of-memory events.
-* System Load: Check the CPU and Memory of VM and some primary processes (etcd, kubelet...)
+* System load: Check the CPU and Memory of VM and some primary processes (etcd, kubelet...)
 * TCP: Check if the TCP connection could be established to exposed services (external load balancer, internal cluster service)
 * Ping: Check if the icmp ping/pong could work towards public IP (8.8.8.8) and cluster IP (node, pod) 
+* KMS cache size: Check if API server KMS cache size is sufficient to hold all secrets.
 
 ## How to use
 

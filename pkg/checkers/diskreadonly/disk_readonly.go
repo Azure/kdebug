@@ -17,8 +17,8 @@ const (
 )
 
 var helpLink = []string{
-        "linux.die.net/man/8/mount",
-        "linux.die.net/man/8/fsck",
+	"linux.die.net/man/8/mount",
+	"linux.die.net/man/8/fsck",
 	"https://askubuntu.com/a/197468",
 }
 

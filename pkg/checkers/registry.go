@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"github.com/Azure/kdebug/pkg/checkers/kmscachesize"
 	"sort"
 
 	"github.com/Azure/kdebug/pkg/checkers/diskusage"
@@ -26,6 +27,7 @@ var allCheckers = map[string]Checker{
 	"http":           http.New(),
 	"tcp":            tcpping.New(),
 	"systemload":     systemload.New(),
+	"kms":            kmscachesize.New(),
 }
 
 func ListAllCheckerNames() []string {

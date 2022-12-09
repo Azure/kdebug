@@ -97,14 +97,15 @@ func (t *TCPChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) 
 func getCheckTargets(c *base.CheckContext) []pingEndpoint {
 	var targets []pingEndpoint
 	targets = append(targets, PublicTargets...)
-	if c.KubeClient != nil {
-		services, err := getServicePingEndpoint(c)
-		if err != nil {
-			log.Warnf("Fetch cluster service ping endpoint error %v.Skip those checks", err)
-		} else {
-			targets = append(targets, services...)
-		}
-	}
+	// TODO: A bit noisy. Maybe add a new subset option for user to enable these checks
+	// if c.KubeClient != nil {
+	// 	services, err := getServicePingEndpoint(c)
+	// 	if err != nil {
+	// 		log.Warnf("Fetch cluster service ping endpoint error %v.Skip those checks", err)
+	// 	} else {
+	// 		targets = append(targets, services...)
+	// 	}
+	// }
 	return targets
 }
 

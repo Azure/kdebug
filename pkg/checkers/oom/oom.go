@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	logPath         = "/var/log/kern.log"
+	kmsgLogPath     = "/dev/kmsg"
+	ubuntuLogPath   = "/var/log/kern.log"
 	cgroupOOMKeyStr = "Memory cgroup out of memory"
 	outOfMemoryKey  = "Out of memory"
 )
@@ -33,9 +34,18 @@ func (c *OOMChecker) Name() string {
 }
 
 func New() *OOMChecker {
-	//todo: support other logpath
+	paths := []string{kmsgLogPath, ubuntuLogPath}
+	for _, path := range paths {
+		file, err := os.Open(path)
+		file.Close()
+		if err != nil {
+			return &OOMChecker{
+				kernLogPath: ubuntuLogPath,
+			}
+		}
+	}
 	return &OOMChecker{
-		kernLogPath: logPath,
+		kernLogPath: "",
 	}
 }
 
@@ -56,6 +66,10 @@ func (c *OOMChecker) checkOOM(ctx *base.CheckContext) (*base.CheckResult, error)
 	//todo:support other os
 	if !ctx.Environment.HasFlag("linux") {
 		result.Description = fmt.Sprint("Skip oom check in non-linux os")
+		return result, nil
+	}
+	if c.kernLogPath == "" {
+		result.Description = fmt.Sprint("Skip oom check because of can't access supported kern log path")
 		return result, nil
 	}
 	oomInfos, err := c.getAndParseOOMLog()

@@ -18,16 +18,14 @@ var helpLink = []string{
 	"https://man7.org/linux/man-pages/man1/last.1.html",
 }
 
-var explain = "This is the output of last command which is wtmp log. The columns are user, login terminal, kernel version, login time, login period\n"
-
-const rebootCheckTimeInDay = 1
+var explain = "You can also use `last` command to inspect above events. Columns in its output are user, login terminal, kernel version, login time, login period\n"
 
 type Tool struct {
 	rebootCheckTImeInDay int
 }
 
 type Config struct {
-	CheckDays int `short:"d" long:"checkdays" description:"Days you want to look back to search for reboot events. Default is 1."`
+	CheckDays int `short:"d" long:"checkdays" description:"Days you want to look back to search for reboot events." default:"30"`
 }
 
 func (t *Tool) Name() string {
@@ -57,11 +55,7 @@ func (t *Tool) Run(ctx *base.ToolContext) error {
 
 func (t *Tool) parseArgument(ctx *base.ToolContext) {
 	config := ctx.Config.(*Config)
-	if config.CheckDays == 0 {
-		t.rebootCheckTImeInDay = rebootCheckTimeInDay
-	} else {
-		t.rebootCheckTImeInDay = config.CheckDays
-	}
+	t.rebootCheckTImeInDay = config.CheckDays
 }
 
 func (t *Tool) exec() error {
@@ -90,11 +84,14 @@ func (t *Tool) parseResult(result string) string {
 	if reboots == nil {
 		sb.WriteString(color.GreenString("No reboot found in past %v days\n", t.rebootCheckTImeInDay))
 	} else {
-		sb.WriteString(color.RedString("Detect VM reboot\n"))
-		sb.WriteString(color.YellowString(strings.Join(reboots, "\n")))
-		sb.WriteString(color.GreenString("\n"))
-		sb.WriteString(color.GreenString(explain))
-		sb.WriteString(color.GreenString(strings.Join(helpLink, "\n")))
+		sb.WriteString(color.YellowString("Detected following VM reboots:\n"))
+		sb.WriteString("\n")
+		sb.WriteString(strings.Join(reboots, "\n"))
+		sb.WriteString("\n\n")
+		sb.WriteString(color.YellowString(explain))
+		sb.WriteString("\n")
+		sb.WriteString(color.YellowString("See also:\n"))
+		sb.WriteString(color.YellowString(strings.Join(helpLink, "\n")))
 	}
 	return sb.String()
 }

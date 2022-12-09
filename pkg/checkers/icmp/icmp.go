@@ -1,34 +1,37 @@
 package icmpping
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os/user"
 	"time"
 
+	"github.com/Azure/kdebug/pkg/base"
 	"github.com/go-ping/ping"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/Azure/kdebug/pkg/base"
 )
 
-var PublicTargets = []pingTarget{{
-	Address:  "8.8.8.8",
-	Name:     "GoogleDns",
-	Category: "Public",
-}}
+var PublicTargets = []pingTarget{
+	{
+		Address:        "8.8.8.8",
+		Name:           "GoogleDns",
+		Recomendations: []string{"Check the network security settings", "You might be blocked by GFW"},
+	},
+	{
+		Address:        "10.0.0.10",
+		Name:           "ClusterDns",
+		Recomendations: []string{"Check the network security settings", "Check the IPTables"},
+	},
+}
 
 type ICMPChecker struct {
 	targets []pingTarget
 }
 
 type pingTarget struct {
-	Address  string
-	Name     string
-	Category string
+	Address        string
+	Name           string
+	Recomendations []string
 }
 
 func New() *ICMPChecker {
@@ -48,7 +51,9 @@ func (c *ICMPChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error)
 	if !ctx.Environment.HasFlag("azure") {
 		c.targets = append(c.targets, PublicTargets...)
 	}
-	c.targets = append(c.targets, getInClusterTargets(ctx)...)
+	if ctx.KubeClient != nil {
+
+	}
 	resultChan := make(chan *base.CheckResult, len(c.targets))
 	for _, target := range c.targets {
 		go func(pingTarget pingTarget) {
@@ -58,9 +63,10 @@ func (c *ICMPChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error)
 			err := pingOne(pingTarget.Address)
 			if err != nil {
 				result.Error = err.Error()
-				result.Description = fmt.Sprintf("ping %s %s[%s] failed", pingTarget.Category, pingTarget.Address, pingTarget.Name)
+				result.Description = fmt.Sprintf("ping %s[%s] failed", pingTarget.Address, pingTarget.Name)
+				result.Recommendations = pingTarget.Recomendations
 			} else {
-				result.Description = fmt.Sprintf("ping %s %s[%s] succeeded", pingTarget.Category, pingTarget.Address, pingTarget.Name)
+				result.Description = fmt.Sprintf("ping %s[%s] succeeded", pingTarget.Address, pingTarget.Name)
 			}
 			resultChan <- result
 
@@ -93,44 +99,6 @@ func pingOne(ip string) error {
 	return nil
 }
 
-func getInClusterTargets(ctx *base.CheckContext) []pingTarget {
-	var targets []pingTarget
-	if ctx.KubeClient != nil {
-		nodes, err := ctx.KubeClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			log.Warnf("get nodes error %v. Skip cluster nodes", err)
-		} else {
-			for _, node := range nodes.Items {
-				address := getNodeAddress(node)
-				if address != "" {
-					targets = append(targets, pingTarget{
-						Address:  address,
-						Category: "ClusterNode",
-						Name:     node.Name,
-					})
-				}
-			}
-		}
-		pods, err := ctx.KubeClient.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			log.Warnf("get nodes error %v. Skip pod", err)
-		} else {
-			for _, pod := range pods.Items {
-				address := pod.Status.PodIP
-				if address != "" {
-					targets = append(targets, pingTarget{
-						Address:  address,
-						Category: "Pod",
-						Name:     pod.Name,
-					})
-				}
-			}
-		}
-	}
-
-	return targets
-}
-
 func isRoot() bool {
 	currentUser, err := user.Current()
 	if err != nil {
@@ -138,13 +106,4 @@ func isRoot() bool {
 		return false
 	}
 	return currentUser.Username == "root"
-}
-
-func getNodeAddress(node v1.Node) string {
-	for _, address := range node.Status.Addresses {
-		if address.Type == v1.NodeHostName {
-			return address.Address
-		}
-	}
-	return ""
 }

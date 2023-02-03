@@ -3,7 +3,6 @@ package icmpping
 import (
 	"errors"
 	"fmt"
-	"os/user"
 	"time"
 
 	"github.com/Azure/kdebug/pkg/base"
@@ -15,12 +14,12 @@ var PublicTargets = []pingTarget{
 	{
 		Address:        "8.8.8.8",
 		Name:           "GoogleDns",
-		Recomendations: []string{"Check the network security settings", "You might be blocked by GFW"},
+		Recomendations: []string{"Google DNS is not reachable. Check firewall settings if this is not desired."},
 	},
 	{
 		Address:        "10.0.0.10",
 		Name:           "ClusterDns",
-		Recomendations: []string{"Check the network security settings", "Check the IPTables"},
+		Recomendations: []string{"Cluster CoreDNS is not reachable. Check CoreDNS pods and network settings."},
 	},
 }
 
@@ -44,8 +43,9 @@ func (c *ICMPChecker) Name() string {
 
 func (c *ICMPChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
 	var results []*base.CheckResult
-	if !isRoot() {
-		log.Warn("Not root. Skip icmp checker")
+	// TODO: Invoke `ping` command if non-root
+	if !ctx.Environment.HasFlag("root") {
+		log.Debug("Not root. Skip ICMP checker")
 		return results, nil
 	}
 	if !ctx.Environment.HasFlag("azure") {
@@ -94,16 +94,7 @@ func pingOne(ip string) error {
 	}
 	stats := pinger.Statistics()
 	if stats.PacketsRecv <= 0 {
-		return errors.New("ping receive no reply")
+		return errors.New("ping receives no reply")
 	}
 	return nil
-}
-
-func isRoot() bool {
-	currentUser, err := user.Current()
-	if err != nil {
-		log.Warnf("Get user error %v.", err)
-		return false
-	}
-	return currentUser.Username == "root"
 }

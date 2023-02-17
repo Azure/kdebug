@@ -11,11 +11,11 @@ import (
 )
 
 var allTools = map[string]Tool{
-	"tcpdump":          tcpdump.New(),
-	"vmrebootdetector": vmrebootdetector.New(),
-	"upgradeinspector": upgradeinspector.New(),
-	"aadssh":           aadssh.New(),
-	"netexec":          netexec.New(),
+	"tcpdump":         tcpdump.New(),
+	"vmrebootinspect": vmrebootdetector.New(),
+	"upgradesinspect": upgradeinspector.New(),
+	"aadssh":          aadssh.New(),
+	"netexec":         netexec.New(),
 }
 
 func ListAllToolNames() []string {

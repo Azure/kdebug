@@ -3,6 +3,7 @@
 package env
 
 import (
+	"os"
 	"runtime"
 	"strings"
 
@@ -12,8 +13,14 @@ import (
 func getLinuxFlags() []string {
 	var si sysinfo.SysInfo
 	si.GetSysInfo()
-	return []string{
+	flags := []string{
 		runtime.GOOS,
 		strings.ToLower(si.OS.Vendor),
 	}
+
+	if os.Geteuid() == 0 {
+		flags = append(flags, "root")
+	}
+
+	return flags
 }

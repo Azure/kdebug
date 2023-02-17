@@ -34,6 +34,7 @@ type Options struct {
 	NoColor        bool     `long:"no-color" description:"Disable colorized output"`
 	Pause          bool     `long:"pause" description:"Pause until interrupted"`
 	Help           bool     `short:"h" long:"help" description:"Show help message"`
+	NoSetExitCode  bool     `long:"no-set-exit-code" hidden:"-"`
 
 	Batch struct {
 		KubeMachines              bool     `long:"kube-machines" description:"Discover machines from Kubernetes API server"`
@@ -232,9 +233,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, r := range results {
-		if !r.Ok() {
-			os.Exit(1)
+	if !opts.NoSetExitCode {
+		for _, r := range results {
+			if !r.Ok() {
+				os.Exit(1)
+			}
 		}
 	}
 }

@@ -13,20 +13,32 @@ import (
 )
 
 const (
-	NoHighDiskUsageResult        = "Disk usage is in normal size. No additional action required."
-	HighUsageRecommandation      = "Check files listed. If it's just log files or can be deleted, run bash command: `truncate -s 0 /path/to/file` to reduce disk usage. Note: `rm` will not really delete the file if it's opened by processes."
-	FailedToCheckDiskUsageWithDf = "Failed to check disk usage with 'df -h'"
+	NoHighDiskUsageResult   = "Disk usage is in normal size. No additional action required."
+	HighUsageRecommandation = "Check files listed. If it's just log files or can be deleted, run bash command: `truncate -s 0 /path/to/file` to reduce disk usage. Note: `rm` will not really delete the file if it's opened by processes."
+	FailedToRunCommand      = "Failed to check disk usage with '%s'"
+	NotSupportedOS          = "The OS is not supported: %s"
 )
 
 var (
-	DfHeaders = []string{
-		"Filesystem",
-		"Size",
-		"Used",
-		"Avail",
-		"Use%",
-		"Mounted",
-		"on",
+	DfHeaders = map[string][]string{
+		"LINUX": {
+			"Filesystem",
+			"Size",
+			"Used",
+			"Avail",
+			"Use%",
+			"Mounted",
+			"on",
+		},
+		"FREEBSD": {
+			"Filesystem",
+			"Size",
+			"Used",
+			"Avail",
+			"Capacity",
+			"Mounted",
+			"on",
+		},
 	}
 
 	DiskUsageRateThreshold = 90
@@ -71,20 +83,38 @@ func (c *DiskUsageChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, e
 }
 
 func (c *DiskUsageChecker) getDiskUsage() (*base.CheckResult, error) {
-	out, err := exec.Command("df", "-h").Output()
+	out, err := exec.Command("uname").Output()
 	if err != nil {
 		return &base.CheckResult{
 			Checker:     c.Name(),
-			Error:       FailedToCheckDiskUsageWithDf,
+			Error:       fmt.Sprintf(FailedToRunCommand, "uname"),
 			Description: err.Error(),
 		}, nil
 	}
 
-	rows, err := parseDfResult(string(out))
+	uname := strings.TrimSpace(string(out))
+	dfHeaders, ok := DfHeaders[strings.ToUpper(uname)]
+	if !ok {
+		return &base.CheckResult{
+			Checker: c.Name(),
+			Error:   fmt.Sprintf(NotSupportedOS, uname),
+		}, nil
+	}
+
+	out, err = exec.Command("df", "-h").Output()
 	if err != nil {
 		return &base.CheckResult{
 			Checker:     c.Name(),
-			Error:       FailedToCheckDiskUsageWithDf,
+			Error:       fmt.Sprintf(FailedToRunCommand, "df -h"),
+			Description: err.Error(),
+		}, nil
+	}
+
+	rows, err := parseDfResult(string(out), dfHeaders)
+	if err != nil {
+		return &base.CheckResult{
+			Checker:     c.Name(),
+			Error:       FailedToRunCommand,
 			Description: err.Error(),
 		}, nil
 	}
@@ -131,7 +161,7 @@ func getUsageAt(path string, rows []DfRow) (bool, DfRow) {
 	return false, DfRow{}
 }
 
-func parseDfResult(output string) ([]DfRow, error) {
+func parseDfResult(output string, dfHeaders []string) ([]DfRow, error) {
 	lines := strings.Split(output, "\n")
 	result := make([]DfRow, 0, len(lines))
 
@@ -141,15 +171,15 @@ func parseDfResult(output string) ([]DfRow, error) {
 		}
 
 		ds := strings.Fields(strings.TrimSpace(line))
-		if ds[0] == DfHeaders[0] {
+		if ds[0] == dfHeaders[0] {
 			// header
-			if !reflect.DeepEqual(ds, DfHeaders) {
-				return result, errors.New(fmt.Sprintf("Result in df has wrong header format. Expected %v, Actually %v", DfHeaders, ds))
+			if !reflect.DeepEqual(ds, dfHeaders) {
+				return result, errors.New(fmt.Sprintf("Result in df has wrong header format. Expected %v, Actually %v", dfHeaders, ds))
 			}
 			continue
 		}
 
-		row, err := parseDfRow(ds)
+		row, err := parseDfRow(ds, dfHeaders)
 		if err != nil {
 			return nil, err
 		}
@@ -160,9 +190,9 @@ func parseDfResult(output string) ([]DfRow, error) {
 	return result, nil
 }
 
-func parseDfRow(row []string) (DfRow, error) {
-	if len(row) != len(DfHeaders)-1 {
-		return DfRow{}, fmt.Errorf(`unexpected row column number %v (expected %v)`, row, DfHeaders)
+func parseDfRow(row []string, dfHeader []string) (DfRow, error) {
+	if len(row) != len(dfHeader)-1 {
+		return DfRow{}, fmt.Errorf(`unexpected row column number %v (expected %v)`, row, dfHeader)
 	}
 
 	return DfRow{

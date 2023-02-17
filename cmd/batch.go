@@ -26,8 +26,19 @@ func getBatchDiscoverer(opts *Options, chkCtx *base.CheckContext) batch.BatchDis
 	}
 }
 
-func getBatchExecutor(opts *Options) batch.BatchExecutor {
-	return batch.NewSshBatchExecutor(opts.Batch.SshUser)
+func getBatchExecutor(opts *Options, chkCtx *base.CheckContext) batch.BatchExecutor {
+	if opts.Batch.SshUser != "" {
+		return batch.NewSshBatchExecutor(opts.Batch.SshUser)
+	} else if chkCtx.KubeClient != nil {
+		return batch.NewPodBatchExecutor(
+			chkCtx.KubeClient,
+			opts.Batch.PodExecutorImage,
+			opts.Batch.PodExecutorNamespace,
+		)
+	} else {
+		log.Fatal("No batch executor configured")
+		return nil
+	}
 }
 
 type batchReporter struct {
@@ -55,7 +66,7 @@ func runBatch(opts *Options, chkCtx *base.CheckContext, formatter formatters.For
 
 	log.WithFields(log.Fields{"count": len(machines)}).Info("Discovered machines list")
 
-	executor := getBatchExecutor(opts)
+	executor := getBatchExecutor(opts, chkCtx)
 	concurrency := 1
 	if opts.Batch.Concurrency > 0 {
 		concurrency = opts.Batch.Concurrency

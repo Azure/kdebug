@@ -21,6 +21,7 @@ Currently kdebug supports following checks:
 * HTTP: Check HTTP connectivity to well known endpoints.
 * Kube object size: Check configmap/secret object size.
 * Kube pod: Check pod restart reasons.
+* Kube pod scheduling: Check pods scheduling issues.
 * OOM: Analysis out-of-memory events.
 * System load: Check the CPU and Memory of VM and some primary processes (etcd, kubelet...)
 * TCP: Check if the TCP connection could be established to exposed services (external load balancer, internal cluster service)

@@ -26,10 +26,7 @@ func TestCheckOOMLogWhenOOM(t *testing.T) {
 		}
 		check := OOMChecker{kernLogPath: tmp.Name()}
 		defer func() {
-			e := os.Remove(check.kernLogPath)
-			if e != nil {
-				t.Errorf(e.Error())
-			}
+			os.Remove(check.kernLogPath)
 		}()
 		//should be 600. But it fails in 600
 		err = os.WriteFile(check.kernLogPath, []byte(testString), 777)

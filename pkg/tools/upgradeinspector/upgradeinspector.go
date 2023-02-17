@@ -86,12 +86,12 @@ func (t *UpgradeInspectTool) parseResult(result string) string {
 	if logNum == 0 {
 		sb.WriteString(color.GreenString("\nNo package upgrade log found\n"))
 	} else {
-		sb.WriteString(fmt.Sprintf("\n%-19s\t%-30s\t%-20s\t%-20s\n\n", columns[0], columns[1], columns[2], columns[3]))
+		sb.WriteString(fmt.Sprintf("\n%-19s\t%-40s\t%-30s\t%-30s\n\n", columns[0], columns[1], columns[2], columns[3]))
 	}
 
 	for i := 0; i < logNum && i < t.recordLimit; i++ {
 		strs := strings.Split(logs[i], " ")
-		sb.WriteString(fmt.Sprintf("%v-%v\t%-30s\t%-20s\t%-20s\n", strs[0], strs[1], strs[3], strs[4], strs[5]))
+		sb.WriteString(fmt.Sprintf("%v-%v\t%-40s\t%-30s\t%-30s\n", strs[0], strs[1], strs[3], strs[4], strs[5]))
 	}
 	if t.recordLimit < logNum {
 		sb.WriteString(color.YellowString("\n%v package(s) omitted\n", logNum-t.recordLimit))

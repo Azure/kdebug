@@ -38,8 +38,8 @@ func (f *OneLineFormatter) WriteResults(w io.Writer, results []*base.CheckResult
 		failedCheckersList = append(failedCheckersList, c)
 	}
 
-	fmt.Fprintf(w, "%v checks checked, %v failed: %s",
-		color.GreenString("%d", len(results)),
+	fmt.Fprintf(w, "%v checks passed, %v failed: %s",
+		color.GreenString("%d", len(results)-len(failures)),
 		color.RedString("%d", len(failures)),
 		strings.Join(failedCheckersList, ", "))
 

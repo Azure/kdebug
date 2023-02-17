@@ -36,11 +36,10 @@ func (c *OOMChecker) Name() string {
 func New() *OOMChecker {
 	paths := []string{kmsgLogPath, ubuntuLogPath}
 	for _, path := range paths {
-		file, err := os.Open(path)
-		file.Close()
-		if err != nil {
+		if file, err := os.Open(path); err == nil {
+			file.Close()
 			return &OOMChecker{
-				kernLogPath: ubuntuLogPath,
+				kernLogPath: path,
 			}
 		}
 	}

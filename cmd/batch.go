@@ -34,6 +34,7 @@ func getBatchExecutor(opts *Options, chkCtx *base.CheckContext) batch.BatchExecu
 			chkCtx.KubeClient,
 			opts.Batch.PodExecutorImage,
 			opts.Batch.PodExecutorNamespace,
+			opts.Batch.PodExecutorMode,
 		)
 	} else {
 		log.Fatal("No batch executor configured")

@@ -6,6 +6,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.6.1
 	github.com/Microsoft/go-winio v0.5.2
 	github.com/bramvdbogaerde/go-scp v1.2.0
+	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.7.0
 	github.com/go-ping/ping v1.1.0
@@ -31,7 +32,10 @@ require (
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 )
 
-require golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+require (
+	github.com/godbus/dbus/v5 v5.0.4 // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+)
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect

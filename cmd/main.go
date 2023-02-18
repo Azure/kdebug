@@ -46,6 +46,7 @@ type Options struct {
 		SshUser                   string   `long:"ssh-user" description:"SSH user"`
 		PodExecutorImage          string   `long:"pod-executor-image" description:"Container image used by pod executor" default:"ghcr.io/azure/kdebug:main"`
 		PodExecutorNamespace      string   `long:"pod-executor-namespace" description:"Namespace used by pod executor" default:"kdebug"`
+		PodExecutorMode           string   `long:"pod-executor-mode" choice:"host" choice:"container" default:"host" description:"Run as container or run as host"`
 	} `group:"Batch Options" namespace:"batch" description:"Batch mode"`
 
 	RemainingArgs []string

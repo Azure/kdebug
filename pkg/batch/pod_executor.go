@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,13 +18,15 @@ type PodBatchExecutor struct {
 	Client    *kubernetes.Clientset
 	Image     string
 	Namespace string
+	Mode      string
 }
 
-func NewPodBatchExecutor(kubeClient *kubernetes.Clientset, image, ns string) *PodBatchExecutor {
+func NewPodBatchExecutor(kubeClient *kubernetes.Clientset, image, ns, mode string) *PodBatchExecutor {
 	e := &PodBatchExecutor{
 		Client:    kubeClient,
 		Image:     image,
 		Namespace: ns,
+		Mode:      mode,
 	}
 	return e
 }
@@ -82,6 +85,91 @@ func (e *PodBatchExecutor) startWorker(runName string, taskChan chan *batchTask,
 	}
 }
 
+func (e *PodBatchExecutor) getPodTemplateSpecContainerMode(cmd []string, machine string) corev1.PodTemplateSpec {
+	return corev1.PodTemplateSpec{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				corev1.Container{
+					Name:    "kdebug",
+					Image:   e.Image,
+					Command: cmd,
+				},
+			},
+			RestartPolicy: "Never",
+			NodeName:      machine,
+		},
+	}
+}
+
+func (e *PodBatchExecutor) getPodTemplateSpecHostMode(rawCmd []string, machine string) corev1.PodTemplateSpec {
+	cmd := []string{"/run-as-host"}
+	cmd = append(cmd, rawCmd...)
+
+	privileged := true
+	hostPathSocket := corev1.HostPathSocket
+	hostPathDirectory := corev1.HostPathDirectory
+
+	return corev1.PodTemplateSpec{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				corev1.Container{
+					Name:    "kdebug",
+					Image:   e.Image,
+					Command: cmd,
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: &privileged,
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						corev1.VolumeMount{
+							Name:      "system-bus-socket",
+							MountPath: "/var/run/dbus/system_bus_socket",
+						},
+						corev1.VolumeMount{
+							Name:      "systemd-system-config",
+							MountPath: "/etc/systemd/system",
+						},
+						corev1.VolumeMount{
+							Name:      "tmp",
+							MountPath: "/tmp",
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				corev1.Volume{
+					Name: "system-bus-socket",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/run/dbus/system_bus_socket",
+							Type: &hostPathSocket,
+						},
+					},
+				},
+				corev1.Volume{
+					Name: "systemd-system-config",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/etc/systemd/system",
+							Type: &hostPathDirectory,
+						},
+					},
+				},
+				corev1.Volume{
+					Name: "tmp",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/tmp",
+							Type: &hostPathDirectory,
+						},
+					},
+				},
+			},
+			RestartPolicy: "Never",
+			NodeName:      machine,
+		},
+	}
+}
+
 func (e *PodBatchExecutor) executeTask(runName string, task *batchTask) *BatchResult {
 	result := &BatchResult{
 		Machine: task.Machine,
@@ -110,20 +198,15 @@ func (e *PodBatchExecutor) executeTask(runName string, task *batchTask) *BatchRe
 		},
 		Spec: batchv1.JobSpec{
 			TTLSecondsAfterFinished: &ttl,
-			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						corev1.Container{
-							Name:    "kdebug",
-							Image:   e.Image,
-							Command: cmd,
-						},
-					},
-					RestartPolicy: "Never",
-					NodeName:      task.Machine,
-				},
-			},
 		},
+	}
+
+	if e.Mode == "host" {
+		log.Debug("Executor in host mode")
+		job.Spec.Template = e.getPodTemplateSpecHostMode(cmd, task.Machine)
+	} else {
+		log.Debug("Executor in container mode")
+		job.Spec.Template = e.getPodTemplateSpecContainerMode(cmd, task.Machine)
 	}
 
 	job, err := e.Client.BatchV1().Jobs(e.Namespace).Create(

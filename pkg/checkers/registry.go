@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/kdebug/pkg/checkers/kube/pod"
 	"github.com/Azure/kdebug/pkg/checkers/liveness"
 	"github.com/Azure/kdebug/pkg/checkers/oom"
+	"github.com/Azure/kdebug/pkg/checkers/podschedule"
 	"github.com/Azure/kdebug/pkg/checkers/systemload"
 	"github.com/Azure/kdebug/pkg/checkers/tcpping"
 )
@@ -28,6 +29,7 @@ var allCheckers = map[string]Checker{
 	"tcp":            tcpping.New(),
 	"ping":           icmpping.New(),
 	"systemload":     systemload.New(),
+	"podschedule":    podschedule.New(),
 }
 
 func ListAllCheckerNames() []string {

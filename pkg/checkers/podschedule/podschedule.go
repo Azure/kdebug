@@ -1,21 +1,16 @@
-package dns
+package podschedule
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/Azure/kdebug/pkg/base"
-	"github.com/dustin/go-humanize"
-)
-
-const (
-	WarnSizeThreshold = 800 * (1 << 10) // 800 KB
 )
 
 type PodScheduleChecker struct {
@@ -51,6 +46,9 @@ func (c *PodScheduleChecker) checkPodSchedule(clientset *kubernetes.Clientset) [
 	}
 
 	for _, rs := range rsl.Items {
+		if rs.Status.Replicas <= 1 {
+			continue
+		}
 		result := c.checkPodScheduleInReplicaSet(rs, clientset)
 		if result != nil {
 			results = append(results, result)
@@ -66,32 +64,38 @@ func (c *PodScheduleChecker) checkPodScheduleInReplicaSet(rs v1.ReplicaSet, clie
 		log.WithFields(log.Fields{"error": err}).Warn("Fail to get selector of rs")
 	}
 
-	podList, err := clientset.CoreV1().Pods("namespace").List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
+	podList, err := clientset.CoreV1().Pods(rs.Namespace).List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Warn("Fail to list pod under rs")
 	}
 
+	return c.checkForPodList(rs.Name, podList)
 }
 
-func (c *PodScheduleChecker) checkObjectSize(kind, ns, name string, obj interface{}) *base.CheckResult {
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return nil
-	}
-
-	if len(data) > WarnSizeThreshold {
+func (c *PodScheduleChecker) checkForPodList(rsName string, podList *corev1.PodList) *base.CheckResult {
+	if len(podList.Items) > 1 {
+		node := ""
+		for _, pod := range podList.Items {
+			if node == "" {
+				node = pod.Spec.NodeName
+			} else if node != pod.Spec.NodeName {
+				return &base.CheckResult{
+					Checker:     c.Name(),
+					Description: fmt.Sprintf("Pod in replica set %s are scheduled in good shape", rsName),
+				}
+			}
+		}
 		return &base.CheckResult{
-			Checker:     c.Name(),
-			Error:       fmt.Sprintf("%s %s/%s reaching size limit.", kind, ns, name),
-			Description: fmt.Sprintf("%s %s/%s of size %s is reaching size limit. It cannot exceed 1MiB.", kind, ns, name, humanize.Bytes(uint64(len(data)))),
+			Checker: c.Name(),
+			Error:   fmt.Sprintf("All pods of replica set %s are scheduled in the same node", rsName),
 			Recommendations: []string{
-				"Consider mounting a volume or use a separate database or file service.",
+				"Please reference to document to set Affinity and anti-affinity: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity",
 			},
 		}
 	}
 
 	return &base.CheckResult{
 		Checker:     c.Name(),
-		Description: fmt.Sprintf("%s %s/%s of size %s is not reaching size limit.", kind, ns, name, humanize.Bytes(uint64(len(data)))),
+		Description: fmt.Sprintf("Pod in replica set %s are scheduled in good shape", rsName),
 	}
 }

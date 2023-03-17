@@ -1,4 +1,4 @@
-package dns
+package podschedule
 
 import (
 	"testing"
@@ -6,31 +6,66 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func TestCheckObjectSize_OK(t *testing.T) {
-	cm := v1.ConfigMap{
-		BinaryData: map[string][]byte{
-			"key": make([]byte, 100),
+func TestPodSchedule_Single_OK(t *testing.T) {
+	podList := &v1.PodList{
+		Items: []v1.Pod{
+			{
+				Spec: v1.PodSpec{
+					NodeName: "a",
+				},
+			},
 		},
 	}
+
 	checker := New()
-	result := checker.checkObjectSize("ConfigMap", "default", "cm", cm)
+	result := checker.checkForPodList("rc1", podList)
 	if !result.Ok() {
 		t.Errorf("Expect ok result but got %+v", result)
 	}
 }
 
-func TestCheckObjectSize_Warn(t *testing.T) {
-	cm := v1.ConfigMap{
-		BinaryData: map[string][]byte{
-			"key": make([]byte, WarnSizeThreshold+1),
+func TestPodSchedule_DifferentName_OK(t *testing.T) {
+	podList := &v1.PodList{
+		Items: []v1.Pod{
+			{
+				Spec: v1.PodSpec{
+					NodeName: "a",
+				},
+			},
+			{
+				Spec: v1.PodSpec{
+					NodeName: "b",
+				},
+			},
 		},
 	}
+
 	checker := New()
-	result := checker.checkObjectSize("ConfigMap", "default", "cm", cm)
-	if result.Ok() {
-		t.Errorf("Expect non ok result but got %+v", result)
+	result := checker.checkForPodList("rc1", podList)
+	if !result.Ok() {
+		t.Errorf("Expect ok result but got %+v", result)
 	}
-	if result.Error == "" || result.Description == "" || len(result.Recommendations) == 0 {
-		t.Errorf("Expect non empty result but got %+v", result)
+}
+
+func TestPodSchedule_Failed(t *testing.T) {
+	podList := &v1.PodList{
+		Items: []v1.Pod{
+			{
+				Spec: v1.PodSpec{
+					NodeName: "a",
+				},
+			},
+			{
+				Spec: v1.PodSpec{
+					NodeName: "a",
+				},
+			},
+		},
+	}
+
+	checker := New()
+	result := checker.checkForPodList("rc1", podList)
+	if result.Ok() {
+		t.Errorf("Expect failed result but got %+v", result)
 	}
 }

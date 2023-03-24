@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Azure/kdebug/pkg/base"
-	"github.com/go-ping/ping"
+	probing "github.com/prometheus-community/pro-bing"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Azure/kdebug/pkg/base"
 )
 
 var PublicTargets = []pingTarget{
@@ -80,7 +81,7 @@ func (c *ICMPChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error)
 }
 
 func pingOne(ip string) error {
-	pinger, err := ping.NewPinger(ip)
+	pinger, err := probing.NewPinger(ip)
 	if err != nil {
 		return err
 	}

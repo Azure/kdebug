@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/coreos/go-systemd/v22/dbus"
 	log "github.com/sirupsen/logrus"
@@ -23,6 +24,7 @@ Type=oneshot
 ExecStart=TODO_EXEC_START
 StandardOutput=append:/tmp/kdebug.stdout.log
 StandardError=append:/tmp/kdebug.stderr.log
+TimeoutSec=60
 
 [Install]
 WantedBy=multi-user.target
@@ -109,7 +111,12 @@ func main() {
 		log.Fatalf("fail to start systemd unit: %+v", err)
 	}
 
-	<-ch
+	select {
+	case <-ch:
+		break
+	case <-time.After(75 * time.Second):
+		log.Fatalf("timeout starting systemd unit")
+	}
 
 	output, err := readOutputs()
 	if err != nil {

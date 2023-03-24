@@ -90,9 +90,10 @@ func (e *PodBatchExecutor) getPodTemplateSpecContainerMode(cmd []string, machine
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				corev1.Container{
-					Name:    "kdebug",
-					Image:   e.Image,
-					Command: cmd,
+					Name:            "kdebug",
+					Image:           e.Image,
+					Command:         cmd,
+					ImagePullPolicy: corev1.PullAlways,
 				},
 			},
 			RestartPolicy: "Never",
@@ -133,6 +134,7 @@ func (e *PodBatchExecutor) getPodTemplateSpecHostMode(rawCmd []string, machine s
 							MountPath: "/tmp",
 						},
 					},
+					ImagePullPolicy: corev1.PullAlways,
 				},
 			},
 			Volumes: []corev1.Volume{
@@ -188,6 +190,7 @@ func (e *PodBatchExecutor) executeTask(runName string, task *batchTask) *BatchRe
 	}
 
 	ttl := int32(300)
+	backoff := int32(1)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", runName, task.Machine),
@@ -198,6 +201,7 @@ func (e *PodBatchExecutor) executeTask(runName string, task *batchTask) *BatchRe
 		},
 		Spec: batchv1.JobSpec{
 			TTLSecondsAfterFinished: &ttl,
+			BackoffLimit:            &backoff,
 		},
 	}
 

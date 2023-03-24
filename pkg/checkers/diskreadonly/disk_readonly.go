@@ -17,8 +17,8 @@ const (
 )
 
 var helpLink = []string{
-        "linux.die.net/man/8/mount",
-        "linux.die.net/man/8/fsck",
+	"linux.die.net/man/8/mount",
+	"linux.die.net/man/8/fsck",
 	"https://askubuntu.com/a/197468",
 }
 
@@ -36,13 +36,15 @@ func (c *DiskReadOnlyChecker) Name() string {
 func (c *DiskReadOnlyChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult, error) {
 	if !ctx.Environment.HasFlag("linux") {
 		// This checker is only valid on Linux.
-		log.Infof("Skip %s checker in non-linux os", c.Name())
+		log.Debugf("Skip %s checker in non-linux os", c.Name())
 		return []*base.CheckResult{}, nil
 	}
+
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("Fail to get user home dir. %w", err)
 	}
+
 	f, err := os.CreateTemp(homeDir, "testReadOnlyFile")
 	var result *base.CheckResult
 	if err != nil {
@@ -50,14 +52,15 @@ func (c *DiskReadOnlyChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult
 		if strings.Contains(strings.ToLower(err.Error()), "read-only") {
 			mountSrc, mountTarget, findMntErr := getMountSrcAndTarget(homeDir)
 			if findMntErr != nil {
+				log.Warnf("Fail to find mount src for %s: %s", homeDir, findMntErr)
 				recommendation = fmt.Sprintf("%s%s", Reason, GeneralRecommendation)
 			} else {
 				recommendation = fmt.Sprintf("%s Try to use 'fsck' command to fix the %s mounted on %s and then reboot the vm.", Reason, mountSrc, mountTarget)
 			}
 			result = &base.CheckResult{
 				Checker:         c.Name(),
-				Error:           fmt.Sprintf("Fail to create a temp file in %s", homeDir),
-				Description:     err.Error(),
+				Error:           "Disk might be read-only",
+				Description:     fmt.Sprintf("Cannot create a temp file in %s due to %s", homeDir, err),
 				Recommendations: []string{recommendation},
 				HelpLinks:       []string{},
 			}
@@ -71,6 +74,7 @@ func (c *DiskReadOnlyChecker) Check(ctx *base.CheckContext) ([]*base.CheckResult
 			Description: fmt.Sprintf("%s is not read-only", homeDir),
 		}
 	}
+
 	return []*base.CheckResult{result}, nil
 }
 
@@ -78,9 +82,8 @@ func getMountSrcAndTarget(homeDir string) (string, string, error) {
 	findMntCmd := exec.Command("findmnt", "--target", homeDir, "--output", "SOURCE,TARGET", "--noheadings")
 	mountDescription, err := findMntCmd.Output()
 	if err != nil {
-		err = fmt.Errorf("Fail to find the filesystem of %s with command '%s': %w", homeDir, findMntCmd.String(), err)
-		log.Warn(err)
-		return "", "", err
+		return "", "", fmt.Errorf("Fail to find the filesystem of %s with command '%s': %w",
+			homeDir, findMntCmd.String(), err)
 	} else {
 		mountDescriptions := strings.Split(strings.TrimSuffix(string(mountDescription), "\n"), " ")
 		// mount source, mount target, error

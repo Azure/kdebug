@@ -17,7 +17,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.23.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
+	golang.org/x/crypto v0.1.0
 	k8s.io/api v0.24.7
 	k8s.io/apimachinery v0.24.7
 	k8s.io/cli-runtime v0.24.7

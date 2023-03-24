@@ -33,9 +33,12 @@ func TestCheckOOMLogWhenOOM(t *testing.T) {
 		if err != nil {
 			t.Errorf("Create tmp file error:%v", err)
 		}
-		result, _ := check.Check(&base.CheckContext{
+		result, err := check.Check(&base.CheckContext{
 			Environment: environment,
 		})
+		if err != nil {
+			t.Errorf("Expect no error but got: %s", err)
+		}
 		if len(result) != 1 {
 			t.Errorf("Get unexpected OOM result length %v", len(result))
 		}

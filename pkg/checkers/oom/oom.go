@@ -2,10 +2,13 @@ package oom
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
+	"syscall"
 
 	"github.com/Azure/kdebug/pkg/base"
 )
@@ -83,6 +86,24 @@ func (c *OOMChecker) checkOOM(ctx *base.CheckContext) (*base.CheckResult, error)
 	}
 	return result, nil
 }
+
+type nonBlockReader struct {
+	fd int
+}
+
+func (r *nonBlockReader) Read(buf []byte) (n int, err error) {
+	n, err = syscall.Read(r.fd, buf)
+	if err != nil {
+		if errors.Is(err, syscall.EAGAIN) {
+			return 0, io.EOF
+		}
+	}
+	if n == 0 && err == nil {
+		return 0, io.EOF
+	}
+	return n, err
+}
+
 func (c *OOMChecker) getAndParseOOMLog() ([]string, error) {
 	file, err := os.Open(c.kernLogPath)
 	if err != nil {
@@ -90,8 +111,13 @@ func (c *OOMChecker) getAndParseOOMLog() ([]string, error) {
 	}
 	defer file.Close()
 
+	fd := int(file.Fd())
+	if err = syscall.SetNonblock(fd, true); err != nil {
+		return nil, fmt.Errorf("Fail to read in non-block mode: %s", err)
+	}
+
 	var oomInfos []string
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(&nonBlockReader{fd})
 	for scanner.Scan() {
 		tmp := scanner.Text()
 		//todo: more sophisticated OOM context

@@ -35,6 +35,7 @@ type Options struct {
 	Pause          bool     `long:"pause" description:"Pause until interrupted"`
 	Help           bool     `short:"h" long:"help" description:"Show help message"`
 	NoSetExitCode  bool     `long:"no-set-exit-code" hidden:"-"`
+	Output         string   `short:"o" long:"output" description:"Output file"`
 
 	Batch struct {
 		KubeMachines              bool     `long:"kube-machines" description:"Discover machines from Kubernetes API server"`
@@ -159,7 +160,7 @@ func main() {
 		}
 	}
 
-	if !isatty.IsTerminal(os.Stdout.Fd()) || opts.NoColor {
+	if !isatty.IsTerminal(os.Stdout.Fd()) || opts.NoColor || opts.Output != "" {
 		color.NoColor = true
 	}
 
@@ -218,6 +219,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	ctx.Output = os.Stdout
+	if opts.Output != "" {
+		outFile, err := os.OpenFile(opts.Output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatalf("Fail to open output file: %s", opts.Output)
+		}
+		defer outFile.Close()
+		ctx.Output = outFile
+	}
+
 	// Batch mode
 	if opts.IsBatchMode() {
 		runBatch(&opts, ctx, formatter)
@@ -231,7 +242,7 @@ func main() {
 	}
 
 	// Output
-	err = formatter.WriteResults(os.Stdout, results)
+	err = formatter.WriteResults(ctx.Output, results)
 	if err != nil {
 		log.Fatal(err)
 	}

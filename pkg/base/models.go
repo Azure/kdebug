@@ -1,6 +1,8 @@
 package base
 
 import (
+	"io"
+
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 
@@ -17,6 +19,7 @@ type CheckContext struct {
 	// TODO: Add shared dependencies here, for example, kube-client
 	Environment env.Environment
 	KubeClient  *kubernetes.Clientset
+	Output      io.Writer
 }
 
 type ToolContext struct {

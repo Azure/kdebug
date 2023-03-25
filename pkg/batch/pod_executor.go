@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -50,6 +51,18 @@ func (e *PodBatchExecutor) isJobCompleted(job *batchv1.Job) bool {
 }
 
 func (e *PodBatchExecutor) Execute(opts *BatchOptions) ([]*BatchResult, error) {
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: e.Namespace,
+		},
+	}
+	_, err := e.Client.CoreV1().Namespaces().Create(
+		context.Background(), ns, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return nil, fmt.Errorf("Fail to create namespace %s for batch operations: %s",
+			e.Namespace, err)
+	}
+
 	taskChan := make(chan *batchTask, opts.Concurrency)
 	resultChan := make(chan *BatchResult, opts.Concurrency)
 	runName := e.generateRunName()

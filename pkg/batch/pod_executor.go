@@ -203,7 +203,7 @@ func (e *PodBatchExecutor) executeTask(runName string, task *batchTask) *BatchRe
 	}
 
 	ttl := int32(300)
-	backoff := int32(1)
+	backoff := int32(0)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", runName, task.Machine),

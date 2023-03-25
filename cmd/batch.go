@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"os"
 
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
@@ -76,14 +75,14 @@ func runBatch(opts *Options, chkCtx *base.CheckContext, formatter formatters.For
 		Machines:    machines,
 		Checkers:    opts.Checkers,
 		Concurrency: concurrency,
-		Reporter:    newBatchReporter(os.Stdout, int64(len(machines))),
+		Reporter:    newBatchReporter(chkCtx.Output, int64(len(machines))),
 	}
 	batchResults, err := executor.Execute(batchOpts)
 	if err != nil {
-		log.Fatal("Fail to run batch", err)
+		log.Fatalf("Fail to run batch: %s", err)
 	}
 
-	err = formatter.WriteBatchResults(os.Stdout, batchResults)
+	err = formatter.WriteBatchResults(chkCtx.Output, batchResults)
 	if err != nil {
 		log.Fatal(err)
 	}

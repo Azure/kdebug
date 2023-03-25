@@ -13,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
+const (
 	SystemdConfigDir    = "/etc/systemd/system"
 	SystemdUnitName     = "kdebug.service"
 	SystemdUnitTemplate = `[Unit]
@@ -22,13 +22,12 @@ Description=kdebug
 [Service]
 Type=oneshot
 ExecStart=TODO_EXEC_START
-StandardOutput=append:/tmp/kdebug.stdout.log
-StandardError=append:/tmp/kdebug.stderr.log
 TimeoutSec=60
 
 [Install]
 WantedBy=multi-user.target
 `
+	OutputFile = "/tmp/kdebug.stdout.log"
 )
 
 func copyFile(src, dst string) error {
@@ -64,7 +63,7 @@ func removeSystemdUnit() error {
 }
 
 func readOutputs() ([]byte, error) {
-	f, err := os.Open("/tmp/kdebug.stdout.log")
+	f, err := os.Open(OutputFile)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +77,7 @@ func main() {
 	}
 
 	cmd := os.Args[1]
-	cmdArgs := os.Args[2:]
+	cmdArgs := append(os.Args[2:], "--output", OutputFile)
 
 	// Copy binary to host
 	baseName := path.Base(cmd)
@@ -128,12 +127,8 @@ func main() {
 		log.Fatalf("fail to remove systemd unit: %+v", err)
 	}
 
-	if err = os.Remove("/tmp/kdebug.stdout.log"); err != nil {
+	if err = os.Remove(OutputFile); err != nil {
 		log.Fatalf("fail to remove stdout file: %+v", err)
-	}
-
-	if err = os.Remove("/tmp/kdebug.stderr.log"); err != nil {
-		log.Fatalf("fail to remove stderr file: %+v", err)
 	}
 
 	// Output

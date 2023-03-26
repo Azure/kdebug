@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 
 	"github.com/fatih/color"
 	flags "github.com/jessevdk/go-flags"
@@ -45,7 +46,7 @@ type Options struct {
 		MachinesFile              string   `long:"machines-file" description:"Path to a file that contains machine names list. Can use - to read from stdin."`
 		Concurrency               int      `long:"concurrency" default:"4" description:"Batch concurrency"`
 		SshUser                   string   `long:"ssh-user" description:"SSH user"`
-		PodExecutorImage          string   `long:"pod-executor-image" description:"Container image used by pod executor" default:"ghcr.io/azure/kdebug:main"`
+		PodExecutorImage          string   `long:"pod-executor-image" description:"Container image used by pod executor"`
 		PodExecutorNamespace      string   `long:"pod-executor-namespace" description:"Namespace used by pod executor" default:"kdebug"`
 		PodExecutorMode           string   `long:"pod-executor-mode" choice:"host" choice:"container" default:"host" description:"Run as container or run as host"`
 	} `group:"Batch Options" namespace:"batch" description:"Batch mode"`
@@ -61,10 +62,26 @@ func (o *Options) IsToolMode() bool {
 	return len(o.Tool) > 0
 }
 
+func getDefaultPodExecutorImage() string {
+	tag := "main"
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+			if setting.Key == "vcs.revision" {
+				tag = setting.Value
+				break
+			}
+		}
+	}
+	return "ghcr.io/azure/kdebug:" + tag
+}
+
 func processOptions(o *Options) {
 	// Run all checkers if not specified
 	if len(o.Checkers) == 0 {
 		o.Checkers = chks.ListAllCheckerNames()
+	}
+	if o.Batch.PodExecutorImage == "" {
+		o.Batch.PodExecutorImage = getDefaultPodExecutorImage()
 	}
 }
 

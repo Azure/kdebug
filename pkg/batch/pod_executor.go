@@ -29,6 +29,11 @@ func NewPodBatchExecutor(kubeClient *kubernetes.Clientset, image, ns, mode strin
 		Namespace: ns,
 		Mode:      mode,
 	}
+
+	log.WithFields(log.Fields{
+		"image": image, "namespace": ns, "mode": mode,
+	}).Debug("NewPodBatchExecutor")
+
 	return e
 }
 
@@ -219,10 +224,8 @@ func (e *PodBatchExecutor) executeTask(runName string, task *batchTask) *BatchRe
 	}
 
 	if e.Mode == "host" {
-		log.Debug("Executor in host mode")
 		job.Spec.Template = e.getPodTemplateSpecHostMode(cmd, task.Machine)
 	} else {
-		log.Debug("Executor in container mode")
 		job.Spec.Template = e.getPodTemplateSpecContainerMode(cmd, task.Machine)
 	}
 

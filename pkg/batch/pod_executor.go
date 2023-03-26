@@ -111,7 +111,7 @@ func (e *PodBatchExecutor) getPodTemplateSpecContainerMode(cmd []string, machine
 					Name:            "kdebug",
 					Image:           e.Image,
 					Command:         cmd,
-					ImagePullPolicy: corev1.PullAlways,
+					ImagePullPolicy: corev1.PullIfNotPresent,
 				},
 			},
 			RestartPolicy: "Never",
@@ -152,7 +152,7 @@ func (e *PodBatchExecutor) getPodTemplateSpecHostMode(rawCmd []string, machine s
 							MountPath: "/tmp",
 						},
 					},
-					ImagePullPolicy: corev1.PullAlways,
+					ImagePullPolicy: corev1.PullIfNotPresent,
 				},
 			},
 			Volumes: []corev1.Volume{

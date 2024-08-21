@@ -8,7 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 const (

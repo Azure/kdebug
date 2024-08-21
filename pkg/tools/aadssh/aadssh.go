@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 const (

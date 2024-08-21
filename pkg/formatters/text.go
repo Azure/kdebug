@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Azure/kdebug/pkg/base"
-	"github.com/Azure/kdebug/pkg/batch"
+	"github.com/nevembalint/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/batch"
 	"github.com/fatih/color"
 	log "github.com/sirupsen/logrus"
 )

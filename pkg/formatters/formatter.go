@@ -3,8 +3,8 @@ package formatters
 import (
 	"io"
 
-	"github.com/Azure/kdebug/pkg/base"
-	"github.com/Azure/kdebug/pkg/batch"
+	"github.com/nevembalint/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/batch"
 )
 
 type Formatter interface {

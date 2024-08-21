@@ -3,7 +3,7 @@ package tools
 import (
 	"errors"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 type Tool interface {

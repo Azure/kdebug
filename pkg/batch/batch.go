@@ -1,6 +1,6 @@
 package batch
 
-import "github.com/Azure/kdebug/pkg/base"
+import "github.com/nevembalint/kdebug/pkg/base"
 
 type BatchOptions struct {
 	Machines    []string

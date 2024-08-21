@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 	log "github.com/sirupsen/logrus"
 
 	corev1 "k8s.io/api/core/v1"

@@ -10,7 +10,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 const KubernetesServiceHost = "KUBERNETES_SERVICE_HOST"

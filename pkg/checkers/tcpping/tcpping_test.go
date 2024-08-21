@@ -2,7 +2,7 @@ package tcpping
 
 import (
 	"fmt"
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 	"math/rand"
 	"net"
 	"strings"

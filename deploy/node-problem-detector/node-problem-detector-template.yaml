@@ -30,7 +30,7 @@ spec:
         command:
         - 'sh'
         - '-c'
-        - 'wget -O /opt/kdebug/kdebug https://github.com/Azure/kdebug/releases/download/v0.4-beta-1/kdebug && chmod +x /opt/kdebug/kdebug'
+        - 'wget -O /opt/kdebug/kdebug https://github.com/nevembalint/kdebug/releases/download/v0.4-beta-1/kdebug && chmod +x /opt/kdebug/kdebug'
         volumeMounts:
         - name: kdebug
           mountPath: /opt/kdebug

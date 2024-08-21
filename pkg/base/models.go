@@ -6,7 +6,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/Azure/kdebug/pkg/env"
+	"github.com/nevembalint/kdebug/pkg/env"
 )
 
 type CheckContext struct {

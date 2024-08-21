@@ -3,7 +3,7 @@ package dummy
 import (
 	"os"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 type DummyChecker struct {

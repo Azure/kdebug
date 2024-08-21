@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Azure/kdebug/pkg/base"
-	"github.com/Azure/kdebug/pkg/env"
+	"github.com/nevembalint/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/env"
 	"github.com/miekg/dns"
 )
 

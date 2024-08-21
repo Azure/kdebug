@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 const (

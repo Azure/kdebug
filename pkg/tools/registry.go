@@ -3,11 +3,11 @@ package tools
 import (
 	"sort"
 
-	"github.com/Azure/kdebug/pkg/tools/aadssh"
-	"github.com/Azure/kdebug/pkg/tools/netexec"
-	"github.com/Azure/kdebug/pkg/tools/tcpdump"
-	"github.com/Azure/kdebug/pkg/tools/upgradeinspector"
-	"github.com/Azure/kdebug/pkg/tools/vmrebootdetector"
+	"github.com/nevembalint/kdebug/pkg/tools/aadssh"
+	"github.com/nevembalint/kdebug/pkg/tools/netexec"
+	"github.com/nevembalint/kdebug/pkg/tools/tcpdump"
+	"github.com/nevembalint/kdebug/pkg/tools/upgradeinspector"
+	"github.com/nevembalint/kdebug/pkg/tools/vmrebootdetector"
 )
 
 var allTools = map[string]Tool{

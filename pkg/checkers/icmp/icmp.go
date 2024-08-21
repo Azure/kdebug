@@ -8,7 +8,7 @@ import (
 	probing "github.com/prometheus-community/pro-bing"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 var PublicTargets = []pingTarget{

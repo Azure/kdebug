@@ -1,4 +1,4 @@
-module github.com/Azure/kdebug
+module github.com/nevembalint/kdebug
 
 go 1.17
 

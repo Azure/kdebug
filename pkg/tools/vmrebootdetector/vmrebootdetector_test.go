@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 func TestReboot(t *testing.T) {

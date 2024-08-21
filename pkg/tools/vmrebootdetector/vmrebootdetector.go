@@ -10,7 +10,7 @@ import (
 	"github.com/fatih/color"
 	flags "github.com/jessevdk/go-flags"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 var helpLink = []string{

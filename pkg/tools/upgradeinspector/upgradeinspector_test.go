@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 )
 
 func TestUpgradeParser_Success(t *testing.T) {

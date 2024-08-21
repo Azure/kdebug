@@ -17,11 +17,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
-	"github.com/Azure/kdebug/pkg/base"
-	chks "github.com/Azure/kdebug/pkg/checkers"
-	"github.com/Azure/kdebug/pkg/env"
-	"github.com/Azure/kdebug/pkg/formatters"
-	tools "github.com/Azure/kdebug/pkg/tools"
+	"github.com/nevembalint/kdebug/pkg/base"
+	chks "github.com/nevembalint/kdebug/pkg/checkers"
+	"github.com/nevembalint/kdebug/pkg/env"
+	"github.com/nevembalint/kdebug/pkg/formatters"
+	tools "github.com/nevembalint/kdebug/pkg/tools"
 )
 
 type Options struct {
@@ -72,7 +72,7 @@ func getDefaultPodExecutorImage() string {
 			}
 		}
 	}
-	return "ghcr.io/azure/kdebug:" + tag
+	return "ghcr.io/nevembalint/kdebug:" + tag
 }
 
 func processOptions(o *Options) {

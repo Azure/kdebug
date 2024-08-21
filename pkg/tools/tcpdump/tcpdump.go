@@ -8,7 +8,7 @@ import (
 
 	flags "github.com/jessevdk/go-flags"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 	log "github.com/sirupsen/logrus"
 )
 

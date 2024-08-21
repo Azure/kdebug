@@ -3,7 +3,7 @@ package netexec
 import (
 	"testing"
 
-	"github.com/Azure/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/base"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 

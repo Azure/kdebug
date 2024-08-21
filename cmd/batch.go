@@ -6,9 +6,9 @@ import (
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Azure/kdebug/pkg/base"
-	"github.com/Azure/kdebug/pkg/batch"
-	"github.com/Azure/kdebug/pkg/formatters"
+	"github.com/nevembalint/kdebug/pkg/base"
+	"github.com/nevembalint/kdebug/pkg/batch"
+	"github.com/nevembalint/kdebug/pkg/formatters"
 )
 
 func getBatchDiscoverer(opts *Options, chkCtx *base.CheckContext) batch.BatchDiscoverer {

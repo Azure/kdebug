@@ -11,10 +11,10 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492 # v2.2.0
       with:
         go-version: "1.20"
 
@@ -25,7 +25,7 @@ jobs:
       run: make test
 
     - name: Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
       with:
         files: bin/kdebug
         generate_release_notes: true
